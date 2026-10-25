@@ -7,10 +7,10 @@ const page=await browser.newPage({viewport:{width:1440,height:900},deviceScaleFa
 const errors=[];
 page.on('pageerror',e=>errors.push(e.stack||e.message));
 page.on('console',msg=>{if(msg.type()==='error')errors.push('console: '+msg.text())});
-await page.goto('http://127.0.0.1:5188/',{waitUntil:'networkidle',timeout:30000});
+await page.goto(process.env.TEST_BASE_URL || 'http://127.0.0.1:5188/',{waitUntil:'networkidle',timeout:30000});
 await page.waitForTimeout(4000);
 const results={title:await page.title(), canvas:await page.locator('#world').count(), loadingHidden:await page.locator('#loading').evaluate(el=>el.classList.contains('hidden')),fps:await page.locator('#fps').innerText(),altitude:await page.locator('#altitude').innerText(),webgl:await page.evaluate(()=>{const c=document.createElement('canvas');return !!(c.getContext('webgl2')||c.getContext('webgl'))}),errorCount:errors.length};
-await page.screenshot({path:'preview.png',fullPage:false});
+if(!process.env.TEST_BASE_URL) await page.screenshot({path:'preview.png',fullPage:false});
 await page.getByRole('button',{name:'TOP DOWN'}).click();
 await page.waitForTimeout(1500);
 results.cameraView=await page.locator('[data-view=overhead]').getAttribute('class');
