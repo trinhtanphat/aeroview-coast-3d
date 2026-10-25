@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import './style.css';
 
 const $ = (id) => document.getElementById(id);
@@ -22,7 +23,7 @@ try {
  loader.innerHTML='<div class="load-mark">A<span>✦</span></div><p>WEBGL IS UNAVAILABLE ON THIS DEVICE</p><p>Try Chrome/Edge with hardware acceleration enabled.</p>';
  throw err;
 }
-renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, window.innerWidth<720?1.25:1.65));
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.2));
 renderer.setSize(window.innerWidth,window.innerHeight);
 renderer.outputColorSpace=THREE.SRGBColorSpace;
 renderer.toneMapping=THREE.ACESFilmicToneMapping;
@@ -97,9 +98,30 @@ riverGeo.computeVertexNormals();
 const river=new THREE.Mesh(riverGeo,new THREE.MeshStandardMaterial({color:'#305d65',metalness:.24,roughness:.3,side:THREE.DoubleSide}));
 scene.add(river);
 const lineMaterial=mat('#b5b39f');
+// Merge all static roads, parks and markings by shared material.
+const groundBaseGeometry=new THREE.PlaneGeometry(1,1);
+const groundBatches=new Map();
 function plane(w,h,x,z,y,material){
- const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),material);
- m.rotation.x=-Math.PI/2;m.position.set(x,y,z);scene.add(m);return m;
+ const m=new THREE.Mesh(groundBaseGeometry,material);
+ m.rotation.x=-Math.PI/2;m.scale.set(w,h,1);m.position.set(x,y,z);
+ const arr=groundBatches.get(material)||[];
+ arr.push(m);groundBatches.set(material,arr);
+ return m;
+}
+function flushGroundMeshes(){
+ for(const [material,meshes] of groundBatches){
+  const pieces=meshes.map(mesh=>{
+   mesh.updateMatrix();
+   const geo=groundBaseGeometry.clone();
+   geo.applyMatrix4(mesh.matrix);
+   return geo;
+  });
+  const merged=mergeGeometries(pieces,false);
+  pieces.forEach(geo=>geo.dispose());
+  if(!merged)throw new Error('Unable to merge ground geometry');
+  scene.add(new THREE.Mesh(merged,material));
+ }
+ groundBatches.clear();
 }
 function ribbon(points,w,color,y=.25){const material=mat(color);for(let i=1;i<points.length;i++){const a=points[i-1],b=points[i];const dx=b[0]-a[0],dz=b[1]-a[1];const len=Math.hypot(dx,dz);let m=plane(w,len,(a[0]+b[0])/2,(a[1]+b[1])/2,y,material);m.rotation.z=0;m.rotation.y=-Math.atan2(dx,dz);}}
 bar.style.width='46%';
@@ -164,18 +186,22 @@ for(let s=0;s<cityGroups.length;s++){
  mesh.instanceMatrix.needsUpdate=true;if(mesh.instanceColor)mesh.instanceColor.needsUpdate=true;mesh.frustumCulled=false;scene.add(mesh);
 }
 // Rooftop features make downtown's silhouette visually varied.
-const rooftops=[];
 const capsMaterial=mat('#637784',.58,.3);
 const aerialMaterial=mat('#d7c9b2',.34,.6);
+const roofData=[],antennaData=[];
 for(const b of towerNodes){
- if(rnd()<.62){
- const tip=new THREE.Mesh(new THREE.BoxGeometry(b.w*.45,rand(3,8),b.d*.45),capsMaterial);
- tip.position.set(b.x,b.h+4,b.z);scene.add(tip);rooftops.push(tip);
- }
- if(rnd()<.25){
- let pole=new THREE.Mesh(new THREE.CylinderGeometry(.22,.5,rand(8,17),5),aerialMaterial);
- pole.position.set(b.x,b.h+12,b.z);scene.add(pole);
- }
+ if(rnd()<.62)roofData.push({x:b.x,y:b.h+4,z:b.z,w:b.w*.45,h:rand(3,8),d:b.d*.45});
+ if(rnd()<.25)antennaData.push({x:b.x,y:b.h+12,z:b.z,h:rand(8,17)});
+}
+if(roofData.length){
+ const roofs=new THREE.InstancedMesh(lotGeometry,capsMaterial,roofData.length);
+ roofData.forEach((b,i)=>{temp.position.set(b.x,b.y,b.z);temp.scale.set(b.w,b.h,b.d);temp.rotation.set(0,0,0);temp.updateMatrix();roofs.setMatrixAt(i,temp.matrix);});
+ roofs.instanceMatrix.needsUpdate=true;roofs.frustumCulled=false;scene.add(roofs);
+}
+if(antennaData.length){
+ const antenna=new THREE.InstancedMesh(new THREE.CylinderGeometry(.22,.5,1,5),aerialMaterial,antennaData.length);
+ antennaData.forEach((b,i)=>{temp.position.set(b.x,b.y,b.z);temp.scale.set(1,b.h,1);temp.rotation.set(0,0,0);temp.updateMatrix();antenna.setMatrixAt(i,temp.matrix);});
+ antenna.instanceMatrix.needsUpdate=true;antenna.frustumCulled=false;scene.add(antenna);
 }
 // Window panes: instanced geometry, no building-per-window draw calls.
 const windowData=[];
@@ -202,6 +228,7 @@ for(let z=25;z<970;z+=168){
  const cx=riverX(z);plane(98,9,cx,z,1.0,roadMat);
  for(const offset of [-5,5])plane(98,.9,cx,z+offset,1.05,sidewalk);
 }
+flushGroundMeshes();
 // Street trees near parks and along the coastal esplanade.
 const trunkMat=mat('#806948'),crownMat=mat('#557e59');
 const trunkGeo=new THREE.CylinderGeometry(.45,.62,4.5,5);
@@ -226,18 +253,22 @@ for(let i=0;i<19;i++){
  mountain.rotation.y=rnd()*Math.PI;mountain.scale.y=rand(.3,.8);scene.add(mountain);
 }
 // Clouds: soft multi-layer groups, not a static backdrop.
-const clouds=[];
 const cloudMaterial=new THREE.MeshLambertMaterial({color:'#f4eee2',transparent:true,opacity:.34,depthWrite:false});
 const cloudGeo=new THREE.SphereGeometry(1,10,7);
+const cloudMesh=new THREE.InstancedMesh(cloudGeo,cloudMaterial,375);
+let cloudIndex=0;
 for(let i=0;i<125;i++){
  const bx=rand(-2200,2200),by=rand(260,510),bz=rand(-2200,-550);
  for(let j=0;j<3;j++){
-  const p=new THREE.Mesh(cloudGeo,cloudMaterial);
-  p.position.set(bx+rand(-60,60),by+rand(-7,7),bz+rand(-45,45));
-  p.scale.set(rand(55,125),rand(12,25),rand(30,70));
-  scene.add(p);clouds.push(p);
+  temp.position.set(bx+rand(-60,60),by+rand(-7,7),bz+rand(-45,45));
+  temp.scale.set(rand(55,125),rand(12,25),rand(30,70));
+  temp.rotation.set(0,0,0);temp.updateMatrix();
+  cloudMesh.setMatrixAt(cloudIndex++,temp.matrix);
  }
 }
+cloudMesh.instanceMatrix.needsUpdate=true;
+cloudMesh.frustumCulled=false;
+scene.add(cloudMesh);
 // Distant shore boats / maritime movement.
 const boats=[];
 const hullMat=mat('#c7d7d9'),sailMat=new THREE.MeshBasicMaterial({color:'#fffaf0',side:THREE.DoubleSide});
@@ -332,6 +363,25 @@ function startFlyover(){
 $('cinematic').addEventListener('click',startFlyover);
 $('explore').addEventListener('click',()=>{flyover=false;controls.enabled=true;animationTarget=null;$('cinematic-label').textContent='START FLYOVER';showToast('FREE EXPLORE: DRAG / SCROLL / PAN');});
 $('fullscreen').addEventListener('click',()=>{if(!document.fullscreenElement)document.documentElement.requestFullscreen?.().catch(()=>showToast('FULLSCREEN UNAVAILABLE'));else document.exitFullscreen?.();});
+const qualityOrder=['AUTO','ECO','BALANCED','ULTRA'];
+const qualityCaps={ECO:.55,BALANCED:1,ULTRA:1.8};
+let qualityMode='AUTO', autoRatioCap=1.2, slowChecks=0, nextAdaptiveCheck=4;
+function activePixelRatio(){
+ const maxRatio=qualityMode==='AUTO'?autoRatioCap:qualityCaps[qualityMode];
+ return Math.min(window.devicePixelRatio||1.5,maxRatio);
+}
+function applyRenderQuality(message=false){
+ renderer.setPixelRatio(activePixelRatio());
+ renderer.setSize(window.innerWidth,window.innerHeight);
+ $('quality-button').textContent='QUALITY · '+qualityMode;
+ $('quality-button').title='Current internal pixel ratio: '+renderer.getPixelRatio().toFixed(2)+'×; click to cycle';
+ if(message)showToast('RENDER QUALITY: '+qualityMode);
+}
+$('quality-button').addEventListener('click',()=>{
+ qualityMode=qualityOrder[(qualityOrder.indexOf(qualityMode)+1)%qualityOrder.length];
+ slowChecks=0;nextAdaptiveCheck=clock.elapsedTime+5;
+ applyRenderQuality(true);
+});
 let toastTimer;
 function showToast(str){const el=$('toast');el.textContent=str;el.classList.add('visible');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('visible'),2400);}
 // Native touchscreen controls via OrbitControls (pinch to zoom, two-finger pan).
@@ -340,7 +390,7 @@ let frames=0,lastTime=0;
 function onResize(){
  const w=window.innerWidth,h=window.innerHeight;
  camera.aspect=w/h;camera.updateProjectionMatrix();
- renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,w<720?1.25:1.65));
+ renderer.setPixelRatio(activePixelRatio());
  renderer.setSize(w,h);
 }
 window.addEventListener('resize',onResize);
@@ -366,10 +416,26 @@ function animate(){
  if(Math.floor(elapsed*2)%2===0){/* light animation uses material opacity in setSky */}
  renderer.render(scene,camera);
  frames++;
- if(elapsed-lastTime>=1){fpsEl.innerHTML=`${Math.round(frames/(elapsed-lastTime))} <small>FPS</small>`;frames=0;lastTime=elapsed;}
+ if(elapsed-lastTime>=1){
+  const fps=Math.round(frames/(elapsed-lastTime));
+  fpsEl.innerHTML=`${fps} <small>FPS</small>`;
+  if(qualityMode==='AUTO' && elapsed>=nextAdaptiveCheck){
+   if(fps<26){slowChecks++;if(slowChecks>=2&&autoRatioCap>.51){autoRatioCap=Math.max(.5,autoRatioCap-.25);applyRenderQuality();slowChecks=0;}}
+   else if(fps>55&&autoRatioCap<1.2){autoRatioCap=Math.min(1.2,autoRatioCap+.15);applyRenderQuality();slowChecks=0;}
+   else slowChecks=0;
+   nextAdaptiveCheck=elapsed+1;
+  }
+  frames=0;lastTime=elapsed;
+ }
  altEl.innerHTML=`${Math.round(Math.max(camera.position.y,0))} <small>M</small>`;
 }
 renderer.setAnimationLoop(animate);
+window.__AEROVIEW_DIAGNOSTICS__=()=>({
+ drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,
+ pixelRatio:renderer.getPixelRatio(),quality:qualityMode,buildings:totalBuildings,
+ windowInstances:windowData.length,cloudInstances:cloudIndex
+});
+applyRenderQuality();
 bar.style.width='100%';
 requestAnimationFrame(()=>{requestAnimationFrame(()=>loader.classList.add('hidden'))});
 console.info('AEROVIEW initialized —',totalBuildings,'buildings,',windowData.length,'windows,',trees.length,'trees');

@@ -6,12 +6,14 @@ A polished, immersive 3D city demo inspired by coastal aerial flyover visuals. P
 
 ## Features
 
-- 🌇 Procedural coastal city with **thousands of buildings and animated water**
+- 🌇 Procedural coastal city with **1,077 buildings, 9,360 window instances, animated water and 375 cloud instances**
 - 🎬 Cinematic auto-flyover plus free orbit, pan and zoom
+- ⚡ Batched ground geometry and instanced cloud / rooftop meshes (~48 WebGL draw calls in test view)
+- 🎛️ Click QUALITY to cycle AUTO → ECO → BALANCED → ULTRA; AUTO reduces resolution on slow clients
 - ☀️ Dawn / Day / Sunset / Night and volumetric-look atmospheric haze
 - 🏙️ Camera presets: Skyline, Top Down, Coastline, Street
 - ✨ Window lighting, palms, tidal waterways, boats, cloud layers
-- 📱 Responsive UI with accessible interactive controls
+- 📱 Responsive UI with tested touch scrolling on 390 px and 768 px viewports
 - 🔐 No third-party map data or API key; all geometry generated in the browser
 
 ## Run locally
@@ -21,12 +23,13 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:5188](http://localhost:5188) (default Vite binds on 0.0.0.0; for local-only run `npm run dev -- --host 127.0.0.1`).
+Open [http://localhost:5188](http://localhost:5188). The development and preview servers bind to loopback only; the public production site is hosted separately on GitHub Pages.
 
 ```bash
 npm test
 npm run build
-npm run test:browser  # Optional Chrome automation on Windows 181
+npm run test:browser  # Chrome automated WebGL interaction test
+npm run test:mobile   # 390px and 768px simulated touch scrolling tests
 ```
 
 ## Publish on GitHub Pages

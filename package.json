@@ -4,11 +4,12 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite --host 0.0.0.0 --port 5188",
+    "dev": "vite --host 127.0.0.1 --port 5188",
     "build": "vite build",
     "build:pages": "vite build --base=/aeroview-coast-3d/ --outDir docs",
     "test:browser": "node scripts/browser-test.mjs",
-    "preview": "vite preview --host 0.0.0.0 --port 5188",
+    "test:mobile": "node scripts/mobile-test.mjs",
+    "preview": "vite preview --host 127.0.0.1 --port 5188",
     "test": "node scripts/smoke.mjs"
   },
   "dependencies": {

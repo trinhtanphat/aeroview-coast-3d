@@ -14,6 +14,10 @@ if(!process.env.TEST_BASE_URL) await page.screenshot({path:'preview.png',fullPag
 await page.getByRole('button',{name:'TOP DOWN'}).click();
 await page.waitForTimeout(1500);
 results.cameraView=await page.locator('[data-view=overhead]').getAttribute('class');
+results.drawStats=await page.evaluate(()=>window.__AEROVIEW_DIAGNOSTICS__?.());
+await page.locator('#quality-button').click();
+results.qualityAfterClick=await page.locator('#quality-button').innerText();
+results.qualityDPR=await page.evaluate(()=>window.__AEROVIEW_DIAGNOSTICS__?.().pixelRatio);
 await page.locator('#time-slider').fill('95');
 results.timeLabel=await page.locator('#time-label').innerText();
 await page.locator('label.switch').click();
@@ -24,4 +28,4 @@ await page.getByRole('button',{name:'FREE EXPLORE'}).click();
 results.freeExplore=await page.locator('#cinematic-label').innerText();
 console.log(JSON.stringify({results,errors},null,2));
 await browser.close();
-if(errors.length || !results.loadingHidden || !results.webgl)process.exit(1);
+if(errors.length || !results.loadingHidden || !results.webgl || !results.drawStats || results.drawStats.drawCalls>150 || !results.qualityAfterClick.includes('ECO'))process.exit(1);
