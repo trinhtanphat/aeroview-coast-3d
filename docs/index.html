@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="theme-color" content="#08101d"/>
+  <link rel="icon" type="image/svg+xml" href="/aeroview-coast-3d/favicon.svg"/>
+  <meta name="description" content="AEROVIEW — interactive, procedural 3D coastal metropolis, rendered live in your browser."/>
+  <title>AEROVIEW — Coastal Metropolis / Interactive 3D</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <script type="module" crossorigin src="/aeroview-coast-3d/assets/index-GG5FHTgb.js"></script>
+  <link rel="stylesheet" crossorigin href="/aeroview-coast-3d/assets/index-CxgiQn0x.css">
+</head>
+<body>
+<div id="app">
+  <canvas id="world" aria-label="Interactive three-dimensional coastal city"></canvas>
+  <div id="vignette"></div>
+  <div id="loading" role="status"><div class="load-mark">A<span>✦</span></div><div class="load-track"><div id="load-bar"></div></div><p>GENERATING YOUR CITY</p></div>
+  <div class="interface">
+    <header class="topbar">
+      <a class="brand" href="#" aria-label="Aeroview home"><span class="brand-mark">✳</span><span>AERO<span class="brand-light">VIEW</span></span></a>
+      <div class="header-center"><span class="live-dot"></span> LIVE 3D ENVIRONMENT <span class="header-divider"></span> <span class="edition">STUDY NO. 001</span></div>
+      <div class="top-right"><div class="coordinates">27°58′ S &nbsp; 153°25′ E<br/><strong>COASTAL DISTRICT / SIMULATED</strong></div><button class="icon-button" id="fullscreen" title="Toggle fullscreen" aria-label="Toggle fullscreen"><svg viewBox="0 0 24 24" fill="none"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button></div>
+    </header>
+    <main class="main-layout">
+      <section class="hero">
+        <div class="eyebrow"><span class="eyebrow-line"></span> THE ART OF PERSPECTIVE <span class="hero-index">/ 001</span></div>
+        <h1>Above<br/>the <i>ordinary.</i></h1>
+        <p class="subline">A city that lives between the skyline and the sea.<br/>Every perspective is a new discovery.</p>
+        <div class="hero-actions"><button id="cinematic" class="primary-btn"><span class="play-shape">▶</span><span id="cinematic-label">START FLYOVER</span><span class="btn-arrow">↗</span></button><button id="explore" class="secondary-btn"><span class="tiny-target">◎</span> FREE EXPLORE</button></div>
+      </section>
+      <aside class="control-panel" id="panel">
+        <div class="panel-top"><span class="micro">SCENE CONTROL</span><span class="panel-number">01 — 04</span></div>
+        <h2>Shape the<br/><em>atmosphere.</em></h2>
+        <div class="divider-line"></div>
+        <div class="control-group">
+          <div class="group-head"><label for="time-slider">TIME OF DAY</label><span id="time-label">GOLDEN HOUR</span></div>
+          <input type="range" id="time-slider" min="0" max="100" value="67" aria-label="Time of day"/>
+          <div class="scale-label"><span>06:00</span><span>12:00</span><span>18:00</span><span>24:00</span></div>
+        </div>
+        <div class="control-group">
+          <div class="group-head"><label for="haze-slider">ATMOSPHERIC HAZE</label><span id="haze-label">35%</span></div>
+          <input type="range" id="haze-slider" min="0" max="100" value="35" aria-label="Atmospheric haze"/>
+        </div>
+        <div class="control-group">
+          <div class="group-head"><span>CAMERA POSITION</span><span class="meta-hint">SELECT A VIEW</span></div>
+          <div class="view-grid">
+            <button class="view-btn selected" data-view="skyline"><span class="view-graphic">◫</span> SKYLINE</button>
+            <button class="view-btn" data-view="overhead"><span class="view-graphic">⌗</span> TOP DOWN</button>
+            <button class="view-btn" data-view="waterfront"><span class="view-graphic">≋</span> COASTLINE</button>
+            <button class="view-btn" data-view="street"><span class="view-graphic">▥</span> STREET</button>
+          </div>
+        </div>
+        <div class="control-group toggle-group">
+          <div><div class="toggle-label">CITY LIGHTS</div><span>Illuminate the architecture</span></div>
+          <label class="switch"><input type="checkbox" id="lights-toggle" checked/><span class="switch-track"></span></label>
+        </div>
+        <div class="panel-footer"><span class="spin-icon">✺</span><span>GENERATED IN REAL TIME<br/>NO VIDEO. NO PRE-RENDER.</span></div>
+      </aside>
+    </main>
+    <footer class="bottombar">
+      <div class="metrics"><div class="metric"><span>ALTITUDE</span><strong id="altitude">285 <small>M</small></strong></div><div class="metric"><span>FRAME RATE</span><strong id="fps">60 <small>FPS</small></strong></div><div class="metric"><span>RENDER ENGINE</span><strong>WEBGL <small>3D</small></strong></div></div>
+      <div class="bottom-center"><div class="crosshair">⌖</div><span>DRAG TO ORBIT <span class="dotsep">·</span> SCROLL TO ZOOM <span class="dotsep">·</span> RIGHT-DRAG TO PAN</span></div>
+      <div class="bottom-right"><span class="system-dot"></span> ALL SYSTEMS ACTIVE <span class="slash">/</span> AEROVIEW © 2026</div>
+    </footer>
+  </div>
+  <div id="toast" role="status" aria-live="polite"></div>
+</div>
+</body>
+</html>
