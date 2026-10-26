@@ -10,8 +10,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-  <script type="module" crossorigin src="/aeroview-coast-3d/assets/index-D2qjMPQj.js"></script>
-  <link rel="stylesheet" crossorigin href="/aeroview-coast-3d/assets/index-C-QUPek4.css">
+  <script type="module" crossorigin src="/aeroview-coast-3d/assets/index-BBRBKSRu.js"></script>
+  <link rel="stylesheet" crossorigin href="/aeroview-coast-3d/assets/index-xEWCS7GI.css">
 </head>
 <body>
 <div id="app">
@@ -23,6 +23,34 @@
     <div class="earth-hud-top"><span class="earth-live">● &nbsp;LIVE EARTH</span><strong id="earth-status">ATLAS MODE · OPENSTREETMAP</strong><button type="button" id="earth-exit">✕ &nbsp; RETURN TO CITY</button></div>
     <div class="earth-hud-bottom"><span>FLY TO</span><button type="button" data-city="goldcoast">GOLD COAST</button><button type="button" data-city="hcmc">HỒ CHÍ MINH</button><button type="button" data-city="singapore">SINGAPORE</button><button type="button" data-city="nyc">NEW YORK</button><button type="button" data-city="tokyo">TOKYO</button><span class="earth-note">DRAG TO ROTATE · SCROLL TO ZOOM</span></div>
   </div>
+  <div id="studio" class="studio" hidden>
+    <button type="button" id="studio-toggle" class="studio-toggle" aria-controls="studio-body" aria-expanded="true">☰ &nbsp; WEATHER + EDITOR <span id="studio-indicator">LIVE DATA</span></button>
+    <div id="studio-body" class="studio-body">
+      <div class="studio-intro"><span>EARTH STUDIO / DATA LAB</span><strong>Real coordinates. Real forecasts.<br/>Interactive layers.</strong></div>
+      <div class="studio-headline"><span>01 / ATMOSPHERE</span><button type="button" id="studio-refresh">↻ REFRESH</button></div>
+      <p id="studio-status" class="studio-status" role="status">Select a location to load a real forecast.</p>
+      <div class="studio-stats">
+        <div><label>TEMPERATURE</label><strong id="wx-temp">—</strong></div>
+        <div><label>PRECIPITATION</label><strong id="wx-rain">—</strong></div>
+        <div><label>WIND / DIRECTION</label><strong id="wx-wind">—</strong></div>
+        <div><label>WAVE HEIGHT</label><strong id="wx-wave">—</strong></div>
+        <div><label>SUN RADIATION</label><strong id="wx-sun">—</strong></div>
+        <div><label>CLOUD LOW/MID/HIGH</label><strong id="wx-cloud">—</strong></div>
+      </div>
+      <label class="studio-slider-label" for="studio-hour">FORECAST HOUR <span id="studio-hour-label">—</span></label>
+      <input id="studio-hour" type="range" min="0" max="23" step="1" value="0"/>
+      <div class="studio-switches"><label><input id="wx-clouds" type="checkbox" checked/> 3 CLOUD LEVELS</label><label><input id="wx-rain-fx" type="checkbox" checked/> RAIN</label><label><input id="wx-wind-fx" type="checkbox" checked/> WIND</label><label><input id="wx-waves-fx" type="checkbox" checked/> WAVES</label></div>
+      <p class="studio-disclaimer">ECMWF IFS HRES ~9 km, sampled at the selected point via Open-Meteo (hourly forecast; model refresh ~6 h). Visual effects are illustrative, not full-global 9 km simulation. Waves are displayed only if marine data is available.</p>
+      <div class="studio-headline"><span>02 / MAP ANNOTATIONS</span><span class="studio-muted">NON-DESTRUCTIVE</span></div>
+      <div class="studio-buttons"><button data-draw="pin">◎ PIN</button><button data-draw="line">⌁ PATH</button><button data-draw="polygon">▱ AREA</button><button id="draw-edit">✎ EDIT</button><button id="draw-finish">✓ FINISH</button><button id="draw-undo">↶ UNDO</button><button id="draw-delete">⌫ DELETE</button><button id="draw-clear">CLEAR</button><button id="draw-export">↓ GEOJSON</button></div>
+      <p id="draw-status" class="studio-hint" role="status">Choose a tool, then click the map. For paths and areas, click FINISH.</p>
+      <div class="studio-headline"><span>03 / CINEMATIC CAMERA</span><span class="studio-muted" id="keyframe-count">0 KEYFRAMES</span></div>
+      <div class="studio-buttons"><button id="camera-add">+ ADD VIEW</button><button id="camera-play">▶ PLAY ROUTE</button><button id="camera-stop">■ STOP</button><button id="camera-snap">↓ PNG</button><button id="camera-record">● RECORD WEBM</button></div>
+      <p id="camera-status" class="studio-hint" role="status">Add at least 2 camera viewpoints, then play the flyover. PNG/WebM exports include map credits; exports of Google Photoreal 3D are disabled until attribution-compliant recording is available.</p>
+      <div class="studio-sources">DATA: <a href="https://open-meteo.com/en/docs/ecmwf-api" target="_blank" rel="noopener noreferrer">Open-Meteo / ECMWF</a> · <a href="https://open-meteo.com/en/docs/marine-weather-api" target="_blank" rel="noopener noreferrer">Marine API</a><br/>Maps © OpenStreetMap contributors · CesiumJS. Google 3D requires a separate billable key.</div>
+    </div>
+  </div>
+  <canvas id="weather-fx" aria-hidden="true" hidden></canvas>
   <div id="earth-dialog" class="earth-dialog" hidden>
     <div class="earth-backdrop" data-close-earth></div>
     <section class="earth-modal" role="dialog" aria-modal="true" aria-labelledby="earth-title">

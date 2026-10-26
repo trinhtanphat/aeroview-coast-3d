@@ -1,5 +1,7 @@
 // AEROVIEW Earth experience. Loaded only when the user explicitly opts in.
 // No Google API key is persisted, placed in a URL hash, or bundled in this application.
+import {makeWeatherStudio} from './weather.js';
+import {makeEditorStudio} from './studio.js';
 const CESIUM_VERSION = '1.145.0';
 const CESIUM_ROOT = `https://cdn.jsdelivr.net/npm/cesium@${CESIUM_VERSION}/Build/Cesium/`;
 const CITIES = Object.freeze({
@@ -76,6 +78,7 @@ function makeViewer(C, mode){
 }
 export function setupEarthMode({onActivate=()=>{},onDeactivate=()=>{}}={}){
  let viewer=null, liveMode=null, busy=false, launching=0;
+ let weather=null,editor=null;
  const originalCoordinates=document.querySelector('.coordinates')?.innerHTML;
  const modal=$('earth-dialog');
  const keyField=$('earth-key');
@@ -103,6 +106,8 @@ export function setupEarthMode({onActivate=()=>{},onDeactivate=()=>{}}={}){
   modal.hidden=true;resetKey();setMessage('');
  };
  function removeViewer(){
+  try{weather?.destroy();editor?.destroy();}catch(e){console.warn('Studio cleanup:',e.name);}
+  weather=null;editor=null;$('studio').hidden=true;
   try{if(viewer&&!viewer.isDestroyed())viewer.destroy();}catch(e){console.warn('Cesium cleanup:',e.message);}
   viewer=null;liveMode=null;
   world.replaceChildren();
@@ -163,6 +168,12 @@ export function setupEarthMode({onActivate=()=>{},onDeactivate=()=>{}}={}){
    $('earth-open').textContent='◎  EARTH MODE';
    modal.hidden=true;resetKey();setMessage('');
    onActivate(mode);
+   $('studio').hidden=false;
+   const startCollapsed=window.matchMedia('(max-width:800px)').matches;
+   $('studio').classList.toggle('collapsed',startCollapsed);
+   $('studio-toggle').setAttribute('aria-expanded',String(!startCollapsed));
+   weather=makeWeatherStudio({C,viewer});
+   editor=makeEditorStudio({C,viewer,mode});
   }catch(err){
    // Do not print a URL or error that could contain the user's API key.
    console.warn('AEROVIEW Earth viewer could not start:',err?.name||'loading error');
@@ -175,6 +186,10 @@ export function setupEarthMode({onActivate=()=>{},onDeactivate=()=>{}}={}){
    busy=false;modalButton.disabled=false;modalButton.textContent=oldLabel;
   }
  }
+ $('studio-toggle').addEventListener('click',()=>{
+  const collapsed=$('studio').classList.toggle('collapsed');
+  $('studio-toggle').setAttribute('aria-expanded',String(!collapsed));
+ });
  $('earth-open').addEventListener('click',open);
  $('earth-launch').addEventListener('click',launch);
  $('earth-dialog-close').addEventListener('click',close);
@@ -186,6 +201,7 @@ export function setupEarthMode({onActivate=()=>{},onDeactivate=()=>{}}={}){
   if(!viewer||!window.Cesium)return;
   const city=el.dataset.city;
   mapCamera(window.Cesium,viewer,city,liveMode);
+  weather?.setCity();
  }));
  document.addEventListener('keydown',ev=>{
   if(ev.key==='Escape'){
@@ -201,7 +217,8 @@ export function setupEarthMode({onActivate=()=>{},onDeactivate=()=>{}}={}){
   cameraHeight:viewer?.camera?.positionCartographic?.height,
   cameraLatitude:viewer?.camera?.positionCartographic?.latitude,
   cameraLongitude:viewer?.camera?.positionCartographic?.longitude,
-  isViewerDestroyed:viewer?.isDestroyed?.()
+  isViewerDestroyed:viewer?.isDestroyed?.(),
+  weather:weather?.diagnostics(),studio:editor?.diagnostics()
  });
  return {get active(){return Boolean(viewer)},get mode(){return liveMode},close:deactivate};
 }

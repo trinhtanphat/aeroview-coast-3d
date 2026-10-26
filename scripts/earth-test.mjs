@@ -31,6 +31,8 @@ if(atlasOutcome==='active'){
  const geoDiag=await page.evaluate(()=>({earth:window.__AEROVIEW_EARTH_DIAGNOSTICS__?.(),osmRequests:performance.getEntriesByType('resource').filter(r=>r.name.includes('tile.openstreetmap.org')).length,cesiumCanvas:!!document.querySelector('#earth-view canvas')}));
  if(!coordInAtlas.includes('SINGAPORE'))throw new Error('Earth coordinates did not update to Singapore');
  console.log('EARTH DIAGNOSTICS',JSON.stringify(geoDiag));
+ const panelInfo=await page.locator('#studio').evaluate(el=>({hidden:el.hidden,display:getComputedStyle(el).display,visibility:getComputedStyle(el).visibility,rect:el.getBoundingClientRect().toJSON(),parent:el.parentElement.id,bodyClass:document.body.className}));
+ console.log('STUDIO PANEL',JSON.stringify(panelInfo));
  await page.screenshot({path:'earth-atlas-preview.png'});
  await page.locator('#earth-exit').click();
 }
