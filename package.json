@@ -17,6 +17,7 @@
     "test:v3": "node scripts/v3-regression.mjs",
     "test:v4": "node scripts/v4-regression.mjs",
     "test:lifecycle": "node scripts/lifecycle-regression.mjs",
+    "test:regional": "node scripts/regional-25-test.mjs",
     "preview": "vite preview --host 127.0.0.1 --port 5188",
     "test": "node scripts/smoke.mjs"
   },

@@ -1,4 +1,4 @@
-// Light-weight illustrative wind tracers between nine ECMWF point forecasts.
+// Light-weight illustrative wind tracers between nine or 25 ECMWF point samples.
 // We interpolate geographic wind vectors by inverse-distance weighting;
 // this is NOT the ECMWF native field, a global streamlines product, or a fluid solver.
 export function createWindTracers({C,viewer}){
@@ -51,9 +51,9 @@ export function createWindTracers({C,viewer}){
  }
  function setData(locations,forecasts,h){
   stop();hour=h;
-  if(!locations||!forecasts||locations.length!==9||forecasts.length!==9)return false;
+  if(!locations||!forecasts||![9,25].includes(locations.length)||forecasts.length!==locations.length)return false;
   stations=[];
-  for(let i=0;i<9;i++){
+  for(let i=0;i<locations.length;i++){
    const speed=forecasts[i]?.hourly?.wind_speed_10m?.[h];
    const direction=forecasts[i]?.hourly?.wind_direction_10m?.[h];
    if(speed===null||direction===null||speed===undefined||direction===undefined||
@@ -63,13 +63,13 @@ export function createWindTracers({C,viewer}){
    stations.push({lon:locations[i].lon,lat:locations[i].lat,
     u:-Math.sin(bearing)*Number(speed),v:-Math.cos(bearing)*Number(speed)});
   }
-  if(stations.length<5){stations=[];return false;}
+  if(stations.length<Math.ceil(locations.length*.55)){stations=[];return false;}
   bounds={w:Math.min(...locations.map(p=>p.w)),e:Math.max(...locations.map(p=>p.e)),
    s:Math.min(...locations.map(p=>p.s)),n:Math.max(...locations.map(p=>p.n))};
   collection=viewer.scene.primitives.add(new C.PolylineCollection());
   const material=C.Material.fromType('Color',{color:C.Color.fromCssColorString('#b6f4ef').withAlpha(.90)});
   for(let i=0;i<COUNT;i++){
-   const line=collection.add({positions:C.Cartesian3.fromDegreesArrayHeights([locations[4].lon,locations[4].lat,235,locations[4].lon+.0001,locations[4].lat,235]),
+   const line=collection.add({positions:C.Cartesian3.fromDegreesArrayHeights([locations[Math.floor(locations.length/2)].lon,locations[Math.floor(locations.length/2)].lat,235,locations[Math.floor(locations.length/2)].lon+.0001,locations[Math.floor(locations.length/2)].lat,235]),
     width:2,material});
    particles.push({line,lon:0,lat:0});reseed(i,1);
   }

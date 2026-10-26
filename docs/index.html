@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-  <script type="module" crossorigin src="/aeroview-coast-3d/assets/index-D89cUsTX.js"></script>
+  <script type="module" crossorigin src="/aeroview-coast-3d/assets/index-uLgvT0NH.js"></script>
   <link rel="stylesheet" crossorigin href="/aeroview-coast-3d/assets/index-DBhZ9ZPS.css">
 </head>
 <body>
@@ -43,13 +43,17 @@
       <p id="timeline-status" class="studio-hint" role="status">Playback uses the already downloaded hourly forecasts—no extra weather requests.</p>
       <div class="studio-switches"><label><input id="wx-clouds" type="checkbox" checked/> 3 CLOUD LEVELS</label><label><input id="wx-rain-fx" type="checkbox" checked/> RAIN</label><label><input id="wx-wind-fx" type="checkbox" checked/> WIND</label><label><input id="wx-waves-fx" type="checkbox" checked/> WAVES</label></div>
       <p class="studio-disclaimer">ECMWF IFS HRES ~9 km, sampled at the selected point via Open-Meteo (hourly forecast; model refresh ~6 h). Visual effects are illustrative, not full-global 9 km simulation. Waves are displayed only if marine data is available.</p>
-      <div class="studio-headline"><span>01B / SPATIAL WEATHER GRID</span><span class="studio-muted">9 SAMPLE POINTS</span></div>
-      <p class="studio-hint">Sample a 3 × 3 neighborhood with ~9 km station spacing, then display georeferenced color cells. Not a full ECMWF raster or 3D atmospheric simulation.</p>
+      <div class="studio-headline"><span>01B / REGIONAL WEATHER FIELD</span><span class="studio-muted" id="grid-count-label">9 POINT SAMPLES</span></div>
+      <p class="studio-hint">Sample a regional 3×3 or 5×5 neighborhood at approximately 9 km spacing. Optional smooth colors use inverse-distance interpolation from point samples (NOT native ECMWF model cells).</p>
+      <label class="studio-input-caption" for="grid-size">REGIONAL COVERAGE</label>
+      <select id="grid-size" class="studio-select"><option value="3" selected>LOCAL · 3 × 3 · 9 POINTS</option><option value="5">REGIONAL · 5 × 5 · 25 POINTS</option></select>
       <label class="studio-input-caption" for="grid-layer">DATA LAYER</label>
       <select id="grid-layer" class="studio-select"><option value="temp">TEMPERATURE (°C)</option><option value="rain">PRECIPITATION (mm/h)</option><option value="wind">WIND SPEED (km/h)</option><option value="cloud">CLOUD COVER (%)</option></select>
       <div class="studio-buttons"><button id="grid-sample" type="button">◎ SAMPLE 9</button><button id="grid-fit" type="button">⌖ FIT AREA</button><button id="grid-clear" type="button">✕ HIDE GRID</button><button id="grid-export" type="button">↓ GEOJSON DATA</button></div>
+      <label class="studio-check"><input id="grid-smooth" type="checkbox"/> SMOOTH FIELD COLORS · IDW INTERPOLATED ESTIMATE</label>
+      <label class="studio-check"><input id="grid-labels" type="checkbox" checked/> SHOW STATION FORECAST VALUES</label>
       <label class="studio-check"><input id="grid-vectors" type="checkbox" checked/> WIND ARROWS WHEN WIND LAYER SELECTED</label>
-      <label class="studio-check"><input id="grid-tracers" type="checkbox"/> ANIMATED WIND TRACERS (INTERPOLATED DEMO · 24 PARTICLES)</label>
+      <label class="studio-check"><input id="grid-tracers" type="checkbox"/> ANIMATED WIND TRACERS (IDW FROM STATIONS · 24 PARTICLES)</label>
       <div id="grid-legend" class="studio-grid-legend" hidden><span id="grid-legend-label">—</span><div id="grid-color-scale"></div><div id="grid-range"></div></div>
       <p id="grid-status" class="studio-hint" role="status">No grid requested. Sampling only occurs when you choose SAMPLE 9.</p>
       <div class="studio-headline"><span>02 / MAP ANNOTATIONS</span><span class="studio-muted">NON-DESTRUCTIVE</span></div>

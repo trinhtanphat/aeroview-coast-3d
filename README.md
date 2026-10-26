@@ -170,3 +170,18 @@ DOM event handlers for Weather, 9-Sample Grid, Building Overlay, Editor and Play
 - Previous `npm run test:v3`, `npm run test:studio-mobile`, `npm run test:capture` and other regressions remain available.
 
 No billed Google tiles or third-party secrets are required for V4 features. Google Photorealistic 3D still requires a separately authorized, restricted Map Tiles API key and a licensed, attribution-compliant workflow.
+
+
+## V5 — regional ECMWF point forecasts (3×3 or 5×5) and IDW display
+
+**Use:** REAL EARTH → WORLD ATLAS → WEATHER + EDITOR → REGIONAL WEATHER FIELD. Select **LOCAL (9 points)** or **REGIONAL (25 points)**, then press SAMPLE 9 / SAMPLE 25. Requests are explicitly user-initiated and limited to once every 45 seconds per viewer instance; switching layers, forecast hours, labels, smooth colors or wind animations does **not** make another weather API request.
+
+The default 9-point mode remains unchanged. The 25-point mode samples a neighborhood at approximately 9 km between locations (about 45 × 45 km for 5 × 5 points). There is no worldwide 9 km data download; a multi-coordinate request to Open-Meteo returns up to 25 **individual modeled point forecasts**. Each point may be snapped to an ECMWF model grid location by the upstream service.
+
+**SMOOTH FIELD COLORS** uses inverse-distance weighting (IDW) from these samples to visualize local variation as either 36 or 100 colored tiles. These tiles are *illustrative estimates, not ECMWF native grid cells, scientifically validated downscaling, or a continuous physically solved 3D weather field*. Original point values can be shown with the SHOW STATION FORECAST VALUES checkbox: the values are **model forecasts**, not physical observations. WIND SPEED displays meteorological flow-direction arrows; optional 24 animated tracers now work with 9 or 25 wind samples.
+
+The GEOJSON DATA export includes the sampled point count and UTC forecast hour, with per-station WGS84 coordinates and explicit sample_type=point_forecast_not_native_grid metadata; interpolated tiles are **not exported as observed data**. The 25-point request consumes more of a weather API location-based quota than 9 points. Free Open-Meteo access is subject to noncommercial terms. No API key is built into this site.
+
+**Tests:** npm run test:regional checks 14 behaviors using a real 25-point Open-Meteo response, including 100 IDW patches, wind vectors, tracer movement, GeoJSON provenance, no unexpected API requests during editing, cleanup and JavaScript errors. npm run test:v3, npm run test:v4 and npm run test:studio-mobile check backwards compatibility. Regional screenshot: regional-25-preview.png.
+
+![Regional spatial weather estimate over Gold Coast, with OpenStreetMap credits](regional-25-preview.png)
