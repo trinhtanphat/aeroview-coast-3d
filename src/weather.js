@@ -24,6 +24,7 @@ async function getJSON(url,signal){
  return out;
 }
 export function makeWeatherStudio({viewer,C}){
+ const uiEvents=new AbortController();
  let active=true,location=null, data=null,marine=null,idx=0,controller=null,refreshAt=0,lastRequestAt=0,updateTimer=null,lastCoords=null;
  const overlay=$('weather-fx');
  const ctx=overlay.getContext('2d',{alpha:true});
@@ -105,8 +106,8 @@ export function makeWeatherStudio({viewer,C}){
  }
  const onMove=()=>scheduleCameraWeather();
  viewer.camera.moveEnd.addEventListener(onMove);
- $('studio-refresh').addEventListener('click',()=>refreshFromCamera(true));
- $('studio-hour').addEventListener('input',e=>{idx=Number(e.target.value);renderData();});
+ $('studio-refresh').addEventListener('click',()=>refreshFromCamera(true),{signal:uiEvents.signal});
+ $('studio-hour').addEventListener('input',e=>{idx=Number(e.target.value);renderData();},{signal:uiEvents.signal});
  function resize(){
   const rect=overlay.getBoundingClientRect();
   overlay.width=Math.max(1,Math.floor(rect.width));overlay.height=Math.max(1,Math.floor(rect.height));
@@ -176,7 +177,7 @@ export function makeWeatherStudio({viewer,C}){
   }
  }
  function onResize(){if(active)resize();}
- window.addEventListener('resize',onResize);
+ window.addEventListener('resize',onResize,{signal:uiEvents.signal});
  overlay.hidden=false;resize();raf=requestAnimationFrame(effects);
  // Refresh only when the user is actually viewing a real-world map.
  refreshFromCamera();
@@ -186,7 +187,7 @@ export function makeWeatherStudio({viewer,C}){
   refresh:()=>refreshFromCamera(true),
   diagnostics:()=>({loaded:!!data,model:'ECMWF IFS HRES ~9km',time:current()?.time,
    latitude:location?.lat,longitude:location?.lon,wave:current()?.wave}),
-  destroy(){
+  destroy(){uiEvents.abort();
    active=false;clearInterval(refreshTimer);clearTimeout(updateTimer);controller?.abort();
    cancelAnimationFrame(raf);window.removeEventListener('resize',onResize);
    viewer.camera.moveEnd.removeEventListener(onMove);

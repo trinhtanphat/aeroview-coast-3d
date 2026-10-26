@@ -148,3 +148,25 @@ SAVE PROJECT now preserves annotation geometry, camera keyframes, configurable p
 On WIN11-181 run npm run test:v3 for 24 assertions: wind vector controls, weather GeoJSON export, no extra API fetch on layer changes, project v2 save/restore, invalid-data rejection and v1 backward compatibility. Run the desktop, Cesium Earth, mobile, studio and capture regression tests too.
 
 NOT YET IMPLEMENTED: true worldwide 9 km atmospheric data cubes, scientifically resolved volumetric clouds, physically accurate waves, global wind particle advection, automatic licensed photorealistic building data, or original Facebook-author source assets.
+
+## V4 — 24-hour weather playback and locally interpolated wind tracers
+
+### How to use
+
+Open **REAL EARTH → WORLD ATLAS → WEATHER + EDITOR**. After point-forecast data loads, use **PLAY 24H** to advance one cached forecast hour at a time. The timeline has Pause, Restart, Slow / Normal / Fast and optional Loop controls. Its changes are shared between the point weather panel, visual precipitation/cloud effects and the sampled geospatial grid when present. **Playback never requests additional weather API data.** If the browser tab becomes hidden or the Earth viewer is closed, the animation pauses and timers are released.
+
+To render wind movement, choose **SPATIAL WEATHER GRID → SAMPLE 9 → WIND SPEED**, and enable **ANIMATED WIND TRACERS**. Up to 24 cyan wind particles move over the 3×3 sample region. An inverse-distance weighting of the nine sampled meteorological vectors approximates horizontal wind **between** sample sites, with vector direction reversed from meteorological FROM to actual TO. They are intentionally switched off by default for older GPUs.
+
+**Scientific limitation:** particle trajectories are animated *illustrations*, **not** ECMWF native vector fields, a calibrated flow/particle transport model or real-world displacement predictions. The animation exaggerates elapsed model time for visual clarity. Forecast playback advances discrete hourly samples; it does not interpolate in physical time or increase the meteorological model's refresh frequency.
+
+### Lifecycle/performance
+
+DOM event handlers for Weather, 9-Sample Grid, Building Overlay, Editor and Playback are tied to abort signals and cleaned up on closing Earth view. Wind particle intervals and primitives are removed when toggled off, changing map layers or leaving REAL EARTH. Repeatedly opening/closing the viewer therefore does not leave previously mounted control handlers active.
+
+### Automated tests
+
+- `npm run test:v4`: 14 checks for loading, moving 24 wind tracers, weather station coverage, playback controls, endpoint and reset behavior, no extra ECMWF request on playback, cleanup and JavaScript errors.
+- `npm run test:lifecycle`: two full open/close cycles with editable map annotations, camera keyframes, reset controls and stale listener checks.
+- Previous `npm run test:v3`, `npm run test:studio-mobile`, `npm run test:capture` and other regressions remain available.
+
+No billed Google tiles or third-party secrets are required for V4 features. Google Photorealistic 3D still requires a separately authorized, restricted Map Tiles API key and a licensed, attribution-compliant workflow.

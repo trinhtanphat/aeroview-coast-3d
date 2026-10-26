@@ -1,3 +1,4 @@
+import {createWindTracers} from './wind-tracers.js';
 // Georeferenced local-neighborhood ECMWF point samples (~9 km spacing).
 // Each square is a visualization of ONE POINT, not a scientifically complete
 // model raster; grid is limited to nine locations per user-initiated request.
@@ -9,8 +10,10 @@ const LAYERS={
  cloud:{name:'CLOUD COVER',key:'cloud_cover',min:0,max:100,unit:'%'}
 };
 export function makeSpatialWeatherGrid({C,viewer}){
+ const uiEvents=new AbortController();
  let active=true,locations=null,forecast=null,rectangles=[],centers=[],controller=null,loadedAt=0,lastRequestAt=0;
  let lastCenter=null,layer='temp',arrows=0;
+ const tracers=createWindTracers({C,viewer});
  const status=s=>{$('grid-status').textContent=s};
  const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
  const toDeg=n=>C.Math.toDegrees(n);
@@ -32,7 +35,7 @@ export function makeSpatialWeatherGrid({C,viewer}){
    viewer.scene.requestRender();
  }
  function clear(){
-   controller?.abort();
+   tracers.stop();controller?.abort();
    clearScene();forecast=null;locations=null;lastCenter=null;
    $('grid-legend').hidden=true;
    status('Grid hidden. No further sampling is automatic.');
@@ -44,7 +47,7 @@ export function makeSpatialWeatherGrid({C,viewer}){
  }
  function render(){
    clearScene();
-   if(!forecast?.length||!locations?.length)return;
+   if(!forecast?.length||!locations?.length){tracers.stop();return;}
    const idx=Math.max(0,Number($('studio-hour').value)||0);
    const cfg=LAYERS[layer];
    const vals=valuesAt(idx);
@@ -90,6 +93,8 @@ export function makeSpatialWeatherGrid({C,viewer}){
        }
      }
    }
+   const wantTracers=layer==='wind'&&$('grid-tracers').checked;
+   if(wantTracers)tracers.setData(locations,forecast,idx);else tracers.stop();
    $('grid-legend').hidden=false;
    $('grid-legend-label').textContent=cfg.name+' — 9 SAMPLES × '+cfg.unit;
    $('grid-range').textContent=cfg.min+' — '+cfg.max+' '+cfg.unit+' (colors clipped)';
@@ -148,10 +153,11 @@ export function makeSpatialWeatherGrid({C,viewer}){
    duration:1.6
   });
  }
- $('grid-sample').addEventListener('click',sample);
- $('grid-fit').addEventListener('click',fit);
- $('grid-vectors').addEventListener('change',render);
- $('grid-clear').addEventListener('click',clear);
+ $('grid-sample').addEventListener('click',sample,{signal:uiEvents.signal});
+ $('grid-fit').addEventListener('click',fit,{signal:uiEvents.signal});
+ $('grid-vectors').addEventListener('change',render,{signal:uiEvents.signal});
+ $('grid-tracers').addEventListener('change',render,{signal:uiEvents.signal});
+ $('grid-clear').addEventListener('click',clear,{signal:uiEvents.signal});
  $('grid-export').addEventListener('click',()=>{
    if(!forecast?.length||!locations?.length){status('Use SAMPLE 9 before exporting station data.');return;}
    const hour=Math.min(23,Math.max(0,Number($('studio-hour').value)||0));
@@ -167,12 +173,12 @@ export function makeSpatialWeatherGrid({C,viewer}){
    a.href=href;a.download='aeroview-weather-9-stations.geojson';document.body.appendChild(a);a.click();a.remove();
    setTimeout(()=>URL.revokeObjectURL(href),10000);
    status('Exported 9 point forecasts as GeoJSON for the selected hour; not a continuous model raster.');
- });
- $('grid-layer').addEventListener('change',ev=>{layer=ev.target.value;render();});
- $('studio-hour').addEventListener('input',render);
+ },{signal:uiEvents.signal});
+ $('grid-layer').addEventListener('change',ev=>{layer=ev.target.value;render();},{signal:uiEvents.signal});
+ $('studio-hour').addEventListener('input',render,{signal:uiEvents.signal});
  return {
   clear,render,
-  diagnostics:()=>({stations:forecast?.length||0,layer,windArrows:arrows,values:valuesAt(Number($('studio-hour').value)||0),lastCenter,loadedAt}),
-  destroy(){active=false;controller?.abort();clearScene();$('grid-legend').hidden=true;}
+  diagnostics:()=>({stations:forecast?.length||0,layer,windArrows:arrows,tracers:tracers.diagnostics(),values:valuesAt(Number($('studio-hour').value)||0),lastCenter,loadedAt}),
+  destroy(){uiEvents.abort();active=false;tracers.destroy();controller?.abort();clearScene();$('grid-legend').hidden=true;}
  };
 }

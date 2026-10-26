@@ -37,6 +37,8 @@
       </div>
       <label class="studio-slider-label" for="studio-hour">FORECAST HOUR <span id="studio-hour-label">—</span></label>
       <input id="studio-hour" type="range" min="0" max="23" step="1" value="0"/>
+      <div class="timeline-controls"><button id="timeline-play" type="button" aria-label="Play hourly forecast">▶ PLAY 24H</button><button id="timeline-reset" type="button">↶ RESTART</button><label for="timeline-speed">SPEED</label><select id="timeline-speed" aria-label="Timeline playback speed"><option value="1800">SLOW</option><option value="900" selected>NORMAL</option><option value="450">FAST</option></select><label class="timeline-loop"><input id="timeline-loop" type="checkbox" checked/> LOOP</label></div>
+      <p id="timeline-status" class="studio-hint" role="status">Playback uses the already downloaded hourly forecasts—no extra weather requests.</p>
       <div class="studio-switches"><label><input id="wx-clouds" type="checkbox" checked/> 3 CLOUD LEVELS</label><label><input id="wx-rain-fx" type="checkbox" checked/> RAIN</label><label><input id="wx-wind-fx" type="checkbox" checked/> WIND</label><label><input id="wx-waves-fx" type="checkbox" checked/> WAVES</label></div>
       <p class="studio-disclaimer">ECMWF IFS HRES ~9 km, sampled at the selected point via Open-Meteo (hourly forecast; model refresh ~6 h). Visual effects are illustrative, not full-global 9 km simulation. Waves are displayed only if marine data is available.</p>
       <div class="studio-headline"><span>01B / SPATIAL WEATHER GRID</span><span class="studio-muted">9 SAMPLE POINTS</span></div>
@@ -45,6 +47,7 @@
       <select id="grid-layer" class="studio-select"><option value="temp">TEMPERATURE (°C)</option><option value="rain">PRECIPITATION (mm/h)</option><option value="wind">WIND SPEED (km/h)</option><option value="cloud">CLOUD COVER (%)</option></select>
       <div class="studio-buttons"><button id="grid-sample" type="button">◎ SAMPLE 9</button><button id="grid-fit" type="button">⌖ FIT AREA</button><button id="grid-clear" type="button">✕ HIDE GRID</button><button id="grid-export" type="button">↓ GEOJSON DATA</button></div>
       <label class="studio-check"><input id="grid-vectors" type="checkbox" checked/> WIND ARROWS WHEN WIND LAYER SELECTED</label>
+      <label class="studio-check"><input id="grid-tracers" type="checkbox"/> ANIMATED WIND TRACERS (INTERPOLATED DEMO · 24 PARTICLES)</label>
       <div id="grid-legend" class="studio-grid-legend" hidden><span id="grid-legend-label">—</span><div id="grid-color-scale"></div><div id="grid-range"></div></div>
       <p id="grid-status" class="studio-hint" role="status">No grid requested. Sampling only occurs when you choose SAMPLE 9.</p>
       <div class="studio-headline"><span>02 / MAP ANNOTATIONS</span><span class="studio-muted">NON-DESTRUCTIVE</span></div>

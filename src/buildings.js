@@ -50,6 +50,7 @@ function validate(input){
  return out;
 }
 export function makeBuildingOverlay({C,viewer}){
+ const uiEvents=new AbortController();
  let active=true,entities=[],visible=true,features=[];
  const status=s=>{$('buildings-status').textContent=s;};
  const flat=ring=>ring.flatMap(p=>[p[0],p[1]]);
@@ -86,21 +87,21 @@ export function makeBuildingOverlay({C,viewer}){
    viewer.scene.requestRender();
   }catch(e){status('GeoJSON rejected: '+(e?.message||'invalid data')+'. Existing geometry retained.');}
  }
- $('buildings-import').addEventListener('click',()=>$('buildings-file').click());
+ $('buildings-import').addEventListener('click',()=>$('buildings-file').click(),{signal:uiEvents.signal});
  $('buildings-file').addEventListener('change',async e=>{
   const file=e.target.files?.[0];
   try{await importFile(file);}finally{e.target.value='';}
- });
+ },{signal:uiEvents.signal});
  $('buildings-toggle').addEventListener('click',()=>{
   if(!entities.length){status('Import a building footprint file first.');return;}
   visible=!visible;entities.forEach(e=>e.show=visible);
   $('buildings-toggle').textContent=visible?'◉ HIDE':'◉ SHOW';
   viewer.scene.requestRender();
- });
+ },{signal:uiEvents.signal});
  $('buildings-clear').addEventListener('click',()=>{
   remove();visible=true;$('buildings-toggle').textContent='◉ HIDE';
   status('Local building extrusions removed; background map unchanged.');
- });
+ },{signal:uiEvents.signal});
  function exportSnapshot(){
    return {schema:'aeroview-buildings-v1',visible,items:features.map(f=>({
     rings:f.rings.map(r=>r.map(p=>p.slice())),height:f.height,assumed:f.assumed,name:f.name
@@ -138,6 +139,6 @@ export function makeBuildingOverlay({C,viewer}){
   exportSnapshot,validateSnapshot,restoreSnapshot,
   clear:()=>{remove();visible=true;$('buildings-toggle').textContent='◉ HIDE';},
   diagnostics:()=>({count:entities.length,visible,assumed:features.filter(f=>f.assumed).length}),
-  destroy(){active=false;remove();}
+  destroy(){uiEvents.abort();active=false;remove();}
  };
 }

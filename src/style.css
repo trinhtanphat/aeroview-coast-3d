@@ -131,3 +131,13 @@ body.earth-mode #earth-attribution{left:20px;right:auto;bottom:16px;z-index:7}
 .studio-buttons button:disabled{opacity:.45;cursor:wait}
 
 .studio-check{display:flex;align-items:center;gap:7px;font:700 9px 'Space Grotesk',sans-serif;letter-spacing:.65px;color:#c1d0d8;margin:11px 0 7px;cursor:pointer}.studio-check input{accent-color:#ddc18c}
+
+/* Hourly forecast player: compact, accessible on desktop and narrow screens. */
+.timeline-controls{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:6px 0 8px}
+.timeline-controls button,.timeline-controls select{background:#1d3040;border:1px solid #a7bcc057;color:#eed1a0;min-height:32px;padding:7px 9px;font:700 9px "Space Grotesk",sans-serif;letter-spacing:.45px;cursor:pointer}
+.timeline-controls button:hover,.timeline-controls select:hover{background:#2b4556}
+.timeline-controls #timeline-play[aria-pressed="true"]{background:#d8c089;color:#111d2b;border-color:#ead4a5}
+.timeline-controls>label{font:700 9px "Space Grotesk",sans-serif;color:#b4ccd1}
+.timeline-controls .timeline-loop{display:flex;align-items:center;gap:4px;cursor:pointer}
+.timeline-controls input{accent-color:#e0c08a}
+@media(max-width:480px){.timeline-controls{gap:5px}.timeline-controls button,.timeline-controls select{padding:6px 7px;font-size:8px}}

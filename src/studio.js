@@ -3,6 +3,7 @@
 const $=id=>document.getElementById(id);
 const geom={pin:'Point',line:'LineString',polygon:'Polygon'};
 export function makeEditorStudio({C,viewer,mode='atlas',buildings=null}){
+ const uiEvents=new AbortController();
  let active=true,drawMode=null,points=[],entities=[],selected=null,editMode=false,handles=[],dragging=null;
  let keyframes=[],playing=false,recording=false,recorder=null,stream=null,ticker=null,recordTimeout=null,routeDuration=4;
  const handler=new C.ScreenSpaceEventHandler(viewer.scene.canvas);
@@ -150,24 +151,24 @@ export function makeEditorStudio({C,viewer,mode='atlas',buildings=null}){
  handler.setInputAction(click,C.ScreenSpaceEventType.LEFT_CLICK);
  handler.setInputAction(()=>finish(),C.ScreenSpaceEventType.LEFT_DOUBLE_CLICK);
  const dBtns=document.querySelectorAll('[data-draw]');
- for(const btn of dBtns)btn.addEventListener('click',()=>setDrawing(btn.dataset.draw));
- $('draw-finish').addEventListener('click',finish);
- $('draw-edit').addEventListener('click',()=>toggleEditing(!editMode));
+ for(const btn of dBtns)btn.addEventListener('click',()=>setDrawing(btn.dataset.draw),{signal:uiEvents.signal});
+ $('draw-finish').addEventListener('click',finish,{signal:uiEvents.signal});
+ $('draw-edit').addEventListener('click',()=>toggleEditing(!editMode),{signal:uiEvents.signal});
  $('draw-undo').addEventListener('click',()=>{
   if(points.length){points.pop();status('Removed last unsaved point.');return;}
   const last=entities.pop();
   if(last){if(selected===last.entity){selected=null;hideHandles();}viewer.entities.remove(last.entity);status('Undid last saved feature.');viewer.scene.requestRender();}
- });
+ },{signal:uiEvents.signal});
  $('draw-delete').addEventListener('click',()=>{
   const i=entities.findIndex(x=>x.entity===selected);
   if(i<0){status('Click an existing annotation first to select it.');return;}
   viewer.entities.remove(entities[i].entity);entities.splice(i,1);
   selected=null;hideHandles();viewer.scene.requestRender();status('Selected annotation deleted.');
- });
+ },{signal:uiEvents.signal});
  $('draw-clear').addEventListener('click',()=>{
   points=[];hideHandles();entities.forEach(x=>viewer.entities.remove(x.entity));entities=[];selected=null;setDrawing(null);
   status('All annotations cleared. Underlying imagery was not changed.');
- });
+ },{signal:uiEvents.signal});
  function download(blob,name){
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');a.href=url;a.download=name;
@@ -185,7 +186,7 @@ export function makeEditorStudio({C,viewer,mode='atlas',buildings=null}){
   });
   download(new Blob([JSON.stringify({type:'FeatureCollection',features},null,2)],{type:'application/geo+json'}),'aeroview-annotations.geojson');
   status('Exported '+features.length+' features as GeoJSON (EPSG:4326).');
- });
+ },{signal:uiEvents.signal});
  // Project files deliberately exclude Google keys, credentials, map tile images
  // and weather provider responses. They contain only user annotation geometry
  // and camera keyframes. The application never uploads these local files.
@@ -264,13 +265,13 @@ export function makeEditorStudio({C,viewer,mode='atlas',buildings=null}){
   status('Project overlays restored · edit or export GeoJSON as needed.');
   viewer.scene.requestRender();
  }
- $('project-save').addEventListener('click',exportProject);
+ $('project-save').addEventListener('click',exportProject,{signal:uiEvents.signal});
  $('project-clear').addEventListener('click',()=>{
   clearProject();
   buildings?.clear();
   projectStatus('Project reset, including local buildings. No files were deleted from your computer.');
- });
- $('project-load').addEventListener('click',()=>$('project-file').click());
+ },{signal:uiEvents.signal});
+ $('project-load').addEventListener('click',()=>$('project-file').click(),{signal:uiEvents.signal});
  $('project-file').addEventListener('change',async e=>{
    const file=e.target.files?.[0];
    if(!file)return;
@@ -279,7 +280,7 @@ export function makeEditorStudio({C,viewer,mode='atlas',buildings=null}){
     loadProject(await file.text());
    }catch(err){projectStatus('Cannot open project: '+(err?.message||'invalid file'));}
    finally{e.target.value='';}
- });
+ },{signal:uiEvents.signal});
 
  // Camera viewpoints record real WGS84 coordinates and orientation.
  function cameraFrame(){
@@ -290,18 +291,18 @@ export function makeEditorStudio({C,viewer,mode='atlas',buildings=null}){
  $('camera-duration').addEventListener('input',e=>{
   routeDuration=Number(e.target.value);
   $('camera-duration-label').textContent=routeDuration.toFixed(1)+' s';
- });
+ },{signal:uiEvents.signal});
  $('camera-back').addEventListener('click',()=>{
   if(playing){camerastatus('Stop flight before removing a waypoint.');return;}
   if(keyframes.length)keyframes.pop();
   $('keyframe-count').textContent=keyframes.length+' KEYFRAMES';
   camerastatus('Camera route now contains '+keyframes.length+' waypoints.');
- });
+ },{signal:uiEvents.signal});
  $('camera-add').addEventListener('click',()=>{
   keyframes.push(cameraFrame());
   $('keyframe-count').textContent=keyframes.length+' KEYFRAMES';
   camerastatus('Captured waypoint '+keyframes.length+'. Add '+Math.max(0,2-keyframes.length)+' more to fly.');
- });
+ },{signal:uiEvents.signal});
  function stopRoute(){
   playing=false;
   try{viewer.camera.cancelFlight();}catch{}
@@ -310,7 +311,7 @@ export function makeEditorStudio({C,viewer,mode='atlas',buildings=null}){
  $('camera-stop').addEventListener('click',()=>{
   stopRoute();
   if(recording&&recorder?.state==='recording')recorder.stop();
- });
+ },{signal:uiEvents.signal});
  async function playRoute(){
   if(playing){stopRoute();return;}
   if(keyframes.length<2){camerastatus('Add at least 2 viewpoints to animate a flight.');return;}
@@ -329,7 +330,7 @@ export function makeEditorStudio({C,viewer,mode='atlas',buildings=null}){
   playing=false;
   if(active)camerastatus('Route finished. Set new views or download a screenshot.');
  }
- $('camera-play').addEventListener('click',playRoute);
+ $('camera-play').addEventListener('click',playRoute,{signal:uiEvents.signal});
  // Browser export includes required map attribution and visual weather layers.
  // Google Photoreal content is NOT captured: its logo/attribution policy must
  // be handled separately with explicit rights before export is offered.
@@ -371,7 +372,7 @@ export function makeEditorStudio({C,viewer,mode='atlas',buildings=null}){
   };
   viewer.scene.postRender.addEventListener(handle);
   viewer.scene.requestRender();
- });
+ },{signal:uiEvents.signal});
  function stopRecording(){
   if(recorder?.state==='recording')recorder.stop();
   if(recordTimeout){clearTimeout(recordTimeout);recordTimeout=null;}
@@ -411,10 +412,10 @@ export function makeEditorStudio({C,viewer,mode='atlas',buildings=null}){
    camerastatus('Recording Cesium map + weather FX + OSM credit · max 20 seconds. Tap again to stop.');
    if(keyframes.length>=2&&!playing)playRoute();
   }catch(e){recording=false;camerastatus('Recorder cannot start: '+(e?.name||'unsupported browser'));}
- });
+ },{signal:uiEvents.signal});
  return {
   diagnostics:()=>({annotations:entities.length,drawMode,editMode,selected:!!selected,keyframes:keyframes.length,routeDuration,playing,recording}),
-  destroy(){
+  destroy(){uiEvents.abort();
    active=false;stopRoute();stopRecording();
    handler.destroy();hideHandles();cam.enableInputs=true;
    entities.forEach(({entity})=>viewer.entities.remove(entity));
