@@ -41,7 +41,7 @@ export async function createFreeBuildingsView({container,city='goldcoast'}={}){
  // OpenFreeMap official Vite integration: explicit MapLibre worker URL.
  maplibregl.setWorkerUrl(workerUrl);
  let active=true,loaded=false,steps=0,flightTimer=null,flightRunning=false;
- let currentCity=city,controls=null;
+ let currentCity=city,controls=null,customA=null,customB=null;
  const child=document.createElement('div');
  child.className='free-city-viewport';
  child.setAttribute('aria-label','Real-location OpenFreeMap 3D city');
@@ -84,7 +84,7 @@ export async function createFreeBuildingsView({container,city='goldcoast'}={}){
   map.setPaintProperty('building-3d','fill-extrusion-color',
    ['interpolate',['linear'],['coalesce',['get','render_height'],10],
     0,'#c7cbc4',35,'#d6ddd9',110,'#abc2c5',240,'#829fac']);
-  controls=createFreeCityControls({map,world:container,getCity:()=>currentCity,onStop:()=>stopFlight(),onStartFlight:()=>startFlight()});
+  controls=createFreeCityControls({map,world:container,getCity:()=>currentCity,onStop:()=>stopFlight(),onStartFlight:(seconds)=>startFlight(seconds),onCapture:(key)=>capturePoint(key),onClear:()=>clearCameraPoints()});
   controls.setMood('daylight');
   map.resize();
  }catch(err){map.remove();child.remove();throw err;}
@@ -93,16 +93,39 @@ export async function createFreeBuildingsView({container,city='goldcoast'}={}){
   if(flightTimer!==null){clearTimeout(flightTimer);flightTimer=null;}
   if(active)map.stop();
  }
+ function clearCameraPoints(){
+  customA=null;customB=null;
+  controls?.refreshCameraPoints?.();
+ }
+ function capturePoint(key){
+  if(!active||!loaded||!['start','end'].includes(key))return null;
+  const c=map.getCenter();
+  const point={center:[c.lng,c.lat],zoom:map.getZoom(),pitch:map.getPitch(),bearing:map.getBearing()};
+  if(key==='start')customA=point;
+  else customB=point;
+  return {start:!!customA,end:!!customB,point};
+ }
  function setCity(id){
   if(!active)return;
   currentCity=id;
-  stopFlight();
+  stopFlight();clearCameraPoints();
   const [lng,latitude]=cityPosition(id);
   map.flyTo({center:[lng,latitude],zoom:15.7,pitch:64,bearing:-26,duration:1700,essential:true});
  }
- function startFlight(){
+ function startFlight(seconds=12){
   if(!active||!loaded)return;
   stopFlight();
+  flightRunning=true;
+  const total=Math.max(3,Math.min(20,Number(seconds)||12))*1000;
+  if(customA&&customB){
+   const first={...customA},last={...customB};
+   map.jumpTo(first);
+   map.easeTo({...last,duration:Math.max(1000,total-250),essential:true,
+    easing:t=>t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2});
+   steps=1;
+   flightTimer=setTimeout(()=>{flightRunning=false;flightTimer=null;},total);
+   return;
+  }
   flightRunning=true;
   const initial=map.getCenter();
   const route=[
@@ -114,9 +137,10 @@ export async function createFreeBuildingsView({container,city='goldcoast'}={}){
   const next=()=>{
    if(!active||!flightRunning)return;
    if(index>=route.length){flightRunning=false;flightTimer=null;return;}
-   map.flyTo({...route[index++],duration:3300,essential:true});
+   const segment=Math.floor((total-300)/route.length);
+   map.easeTo({...route[index++],duration:Math.max(500,segment-60),essential:true});
    steps++;
-   flightTimer=setTimeout(next,3900);
+   flightTimer=setTimeout(next,segment);
   };
   next();
  }
@@ -132,7 +156,8 @@ export async function createFreeBuildingsView({container,city='goldcoast'}={}){
    sourceLoaded:map.isSourceLoaded('openmaptiles'),
    visibleBuildings:(()=>{try{return map.queryRenderedFeatures({layers:['building-3d']}).length}catch{return 0}})(),
    visuals:controls?.diagnostics(),
-   styleSource:'OpenFreeMap / OpenStreetMap',flightRunning,flightSteps:steps
+   styleSource:'OpenFreeMap / OpenStreetMap',flightRunning,flightSteps:steps,
+   customCamera:{start:!!customA,end:!!customB}
   }),
   destroy(){
    if(!active)return;

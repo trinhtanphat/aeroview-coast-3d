@@ -92,7 +92,7 @@ export function makeCityVideoRecorder({map,onStartFlight,onStopFlight,onStatus})
    active=true;
    const duration=Math.max(3,Math.min(20,Number(seconds)||12));
    timeout=setTimeout(stop,duration*1000);
-   onStartFlight();
+   onStartFlight(duration);
    onStatus('Recording '+duration+' s cinematic flight · attribution is burned into every frame.');
    return true;
   }catch(e){lastError=String(e?.message||e?.name||'Recording error');active=false;cleanup();onStatus('Video unavailable: '+lastError);return false;}

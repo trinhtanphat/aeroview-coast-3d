@@ -276,3 +276,12 @@ Video attribution: OpenFreeMap © OpenMapTiles · Data from © OpenStreetMap con
 Run npm run test:free-city-video for a 4-second recorded WebM, verified EBML header, user-consented capture, valid download and no paid Google/Cesium API calls. A GPU software Chrome session may produce lower frame rates than hardware-accelerated video recording.
 
 **Recorded V10 example:** [4-second Gold Coast camera flight WebM](https://trinhtanphat.github.io/aeroview-coast-3d/demo-flight-v10.webm) (browser-rendered vector 3D, with permanent source attribution). It is a short verification example and not a photorealistic map or full-quality production export.
+
+
+## V11 — User-defined A→B camera route
+
+In FREE REAL-WORLD 3D CITY, move and rotate the map to a desirable first view and click **SET START A**. Move the camera to your ending view and click **SET END B**. Select a **CLIP LENGTH** of 6, 12 or 20 seconds and press RECORD FLIGHT. The recorder now passes the duration to the MapLibre camera animation; the saved A→B camera path eases smoothly across the requested time. Without both points saved, recording continues to use the existing three-stop geographic cinematic tour. The upper CINEMATIC FLIGHT control uses a default 12-second tour. **CLEAR** removes A/B and restores the default tour. Changing to a different city also discards both camera points so an accidental long-distance flight cannot cross cities.
+
+A and B contain only transient geographic camera coordinates (lon/lat, zoom, pitch, bearing) in memory of the current viewer. They are not automatically saved remotely or written into Git. The video uses OpenFreeMap vector buildings and retains attribution; this does not create a photorealistic city model.
+
+`npm run test:camera-route` validates saved A and B, custom camera movement, user-selected duration, WebM EBML integrity, flight/record cleanup, clearing and city changes, and zero Google/Cesium requests. `npm run test:free-city`, `npm run test:free-city-mobile`, `npm run test:free-city-video` and `npm run test:earth` cover regressions.

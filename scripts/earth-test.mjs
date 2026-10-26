@@ -6,7 +6,7 @@ const jsErrors=[], warnings=[];
 page.on('pageerror',e=>jsErrors.push(e.message));
 page.on('console',msg=>{if(msg.type()==='error')warnings.push(msg.text().slice(0,250))});
 await page.goto(process.env.TEST_BASE_URL || 'http://127.0.0.1:5188/',{waitUntil:'networkidle',timeout:30000});
-await page.locator('#loading.hidden').waitFor({timeout:20000});
+await page.locator('#loading.hidden').waitFor({state:'attached',timeout:20000});
 await page.locator('#earth-open').click();
 let modalOpen=await page.locator('#earth-dialog').isVisible();
 await page.locator('input[name=earth-layer][value=photoreal]').check();

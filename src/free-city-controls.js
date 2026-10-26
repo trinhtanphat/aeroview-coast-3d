@@ -2,7 +2,7 @@ import {applyCityMood,cityView} from './free-city-visuals.js';
 import {makeCityVideoRecorder} from './free-city-video.js';
 
 // Controls exist only during the free OSM MapLibre viewer session.
-export function createFreeCityControls({map,world,getCity,onStop,onStartFlight}){
+export function createFreeCityControls({map,world,getCity,onStop,onStartFlight,onCapture,onClear}){
  const panel=document.createElement('aside');
  panel.className='free-city-panel';
  panel.setAttribute('aria-label','Geographic 3D city visual controls');
@@ -18,7 +18,10 @@ export function createFreeCityControls({map,world,getCity,onStop,onStartFlight})
   '<option value="daylight">DAYLIGHT</option><option value="golden">GOLDEN HOUR</option>',
   '<option value="bluehour">BLUE HOUR</option></select>',
   '<button type="button" id="free-city-png" title="PNG includes source attribution">↓ PNG</button></div>',
-  '<div class="free-city-record-row"><button type="button" id="free-city-record" data-duration="12">● RECORD FLIGHT · 12 S WEBM</button>',
+  '<div class="free-city-keyframes" role="group" aria-label="Custom camera route"><button type="button" id="free-camera-a">◎ SET START A</button><button type="button" id="free-camera-b">◎ SET END B</button><button type="button" id="free-camera-clear">✕ CLEAR</button></div>',
+  '<p class="free-city-camera-status">Camera route: default cinematic flight</p>',
+  '<div class="free-city-record-settings"><label for="free-record-length">CLIP LENGTH</label><select id="free-record-length" aria-label="Clip length"><option value="6">6 SEC</option><option value="12" selected>12 SEC</option><option value="20">20 SEC</option></select></div>',
+  '<div class="free-city-record-row"><button type="button" id="free-city-record" data-duration="">● RECORD FLIGHT · 12 S WEBM</button>',
   '<button type="button" id="free-city-record-stop">■ STOP & SAVE</button></div>',
   '<p class="free-city-status" role="status">Loading georeferenced building tiles…</p>',
   '<button type="button" class="free-city-focus" aria-pressed="false">◫ HIDE UI</button>'
@@ -32,13 +35,24 @@ export function createFreeCityControls({map,world,getCity,onStop,onStartFlight})
  const recButton=panel.querySelector('#free-city-record');
  const recStop=panel.querySelector('#free-city-record-stop');
  const recording=makeCityVideoRecorder({map,onStartFlight,onStopFlight:onStop,onStatus:s=>{if(active)status.textContent=s;}});
+ const cameraStatus=panel.querySelector('.free-city-camera-status');
+ const clipLength=panel.querySelector('#free-record-length');
+ let capturedA=false,capturedB=false;
+ const refreshCameraPoints=()=>{
+  cameraStatus.textContent=capturedA&&capturedB?'CUSTOM A → B ROUTE READY · Choose RECORD or CINEMATIC FLIGHT':
+   capturedA?'START A SAVED · Move camera to your end view, then SET END B':
+   capturedB?'END B SAVED · Choose start view and SET START A':
+   'Camera route: default cinematic flight';
+  panel.querySelector('#free-camera-a').setAttribute('aria-pressed',String(capturedA));
+  panel.querySelector('#free-camera-b').setAttribute('aria-pressed',String(capturedB));
+ };
  function update(){
   if(!active)return;
   tilesReady=map.areTilesLoaded()&&map.isSourceLoaded('openmaptiles');
   try{count=map.queryRenderedFeatures({layers:['building-3d']}).length;}catch{count=0;}
   const videoState=recording.diagnostics();
   if(!videoState.recording){
-   recButton.textContent='● RECORD FLIGHT · 12 S WEBM';recButton.disabled=false;
+   recButton.textContent='● RECORD FLIGHT · '+clipLength.value+' S WEBM';recButton.disabled=false;
    if(videoState.lastError){status.textContent=videoState.lastError;return;}
    status.textContent=tilesReady
     ? count+' geolocated building features in view · OpenStreetMap / OpenFreeMap'
@@ -61,8 +75,22 @@ export function createFreeCityControls({map,world,getCity,onStop,onStartFlight})
   },signal);
  }
  panel.querySelector('#free-city-mood').addEventListener('change',e=>setMood(e.target.value),signal);
+ for(const [key,id] of [['start','#free-camera-a'],['end','#free-camera-b']]){
+  panel.querySelector(id).addEventListener('click',()=>{
+   if(recording.diagnostics().recording)return;
+   const data=onCapture(key);
+   if(data){capturedA=data.start;capturedB=data.end;refreshCameraPoints();}
+  },signal);
+ }
+ panel.querySelector('#free-camera-clear').addEventListener('click',()=>{
+  if(recording.diagnostics().recording)return;
+  onClear();capturedA=false;capturedB=false;refreshCameraPoints();
+ },signal);
+ clipLength.addEventListener('change',()=>{
+  if(!recording.diagnostics().recording)recButton.textContent='● RECORD FLIGHT · '+clipLength.value+' S WEBM';
+ },signal);
  recButton.addEventListener('click',()=>{
-  if(recording.start(Number(recButton.dataset.duration)||12)){
+  if(recording.start(Number(recButton.dataset.duration)||Number(clipLength.value)||12)){
    recButton.textContent='● RECORDING…';recButton.disabled=true;
   }
  },signal);
@@ -102,7 +130,9 @@ export function createFreeCityControls({map,world,getCity,onStop,onStartFlight})
  },signal);
  return {
   update,setMood,
-  diagnostics:()=>({mood,focused,tilesReady,visibleBuildings:count,captures:captureCount,video:recording.diagnostics()}),
+  refreshCameraPoints:()=>{capturedA=false;capturedB=false;refreshCameraPoints();},
+  diagnostics:()=>({mood,focused,tilesReady,visibleBuildings:count,captures:captureCount,
+   customCamera:{start:capturedA,end:capturedB},clipLength:Number(clipLength.value),video:recording.diagnostics()}),
   destroy(){
    if(!active)return;
    active=false;recording.destroy();clearInterval(poll);
