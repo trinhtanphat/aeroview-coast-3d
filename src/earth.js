@@ -53,7 +53,7 @@ function mapCamera(C,viewer,city,mode){
    coord.replaceChildren(document.createTextNode(lat+' · '+lon),document.createElement('br'),label);
  }
  viewer.camera.setView({
-  destination:C.Cartesian3.fromDegrees(p.lon,p.lat,mode==='photoreal'?p.alt:p.alt*3.5),
+  destination:C.Cartesian3.fromDegrees(p.lon,p.lat,mode==='atlas'?p.alt*3.5:p.alt),
   orientation:{heading:C.Math.toRadians(0),pitch:C.Math.toRadians(-58),roll:0}
  });
  viewer.scene.requestRender();
@@ -80,22 +80,25 @@ function makeViewer(C, mode){
  return viewer;
 }
 export function setupEarthMode({onActivate=()=>{},onDeactivate=()=>{}}={}){
- let viewer=null, liveMode=null, busy=false, launching=0;
+ let viewer=null, liveMode=null, busy=false, launching=0, priorIonToken=null, ionConfigured=false;
+ let flightSerial=0,flightTimeout=null,activeCity='goldcoast';
  let weather=null,editor=null,weatherGrid=null,buildings=null,playback=null;
  const originalCoordinates=document.querySelector('.coordinates')?.innerHTML;
  const modal=$('earth-dialog');
  const keyField=$('earth-key');
+ const osmField=$('earth-osm-key');
  const message=$('earth-message');
  const modalButton=$('earth-launch');
  const world=$('earth-view');
  const hud=$('earth-hud');
- const resetKey=()=>{keyField.value='';$('earth-paid-confirm').checked=false;};
+ const resetKey=()=>{keyField.value='';$('earth-paid-confirm').checked=false;osmField.value='';$('earth-osm-confirm').checked=false;};
  const selectedMode=()=>document.querySelector('input[name="earth-layer"]:checked')?.value||'atlas';
  const setMessage=(txt,isError=false)=>{
   message.textContent=txt;message.classList.toggle('is-error',isError);
  };
  const updateForm=()=>{
   $('earth-key-section').hidden=selectedMode()!=='photoreal';
+  $('earth-osm-section').hidden=selectedMode()!=='osm3d';
   setMessage('');
  };
  const open=()=>{
@@ -108,11 +111,20 @@ export function setupEarthMode({onActivate=()=>{},onDeactivate=()=>{}}={}){
   if(busy)return;
   modal.hidden=true;resetKey();setMessage('');
  };
+ function stopFlight(){
+  flightSerial++;
+  if(flightTimeout!==null)clearTimeout(flightTimeout);
+  flightTimeout=null;
+  if(viewer&&!viewer.isDestroyed())viewer.camera.cancelFlight();
+  $('earth-flight').textContent='▶ CINEMATIC FLIGHT';
+ }
  function removeViewer(){
+  stopFlight();
   try{playback?.destroy();buildings?.destroy();weatherGrid?.destroy();weather?.destroy();editor?.destroy();}catch(e){console.warn('Studio cleanup:',e.name);}
   playback=null;buildings=null;weatherGrid=null;weather=null;editor=null;$('studio').hidden=true;
   try{if(viewer&&!viewer.isDestroyed())viewer.destroy();}catch(e){console.warn('Cesium cleanup:',e.message);}
   viewer=null;liveMode=null;
+  if(ionConfigured&&window.Cesium?.Ion){window.Cesium.Ion.defaultAccessToken=priorIonToken;ionConfigured=false;priorIonToken=null;}
   world.replaceChildren();
   world.hidden=true;hud.hidden=true;$('earth-attribution').hidden=true;
   const coord=document.querySelector('.coordinates');
@@ -129,6 +141,11 @@ export function setupEarthMode({onActivate=()=>{},onDeactivate=()=>{}}={}){
   if(busy)return;
   const mode=selectedMode(),city=$('earth-city').value||'goldcoast';
   const key=keyField.value.trim();
+  const osmKey=osmField.value.trim();
+  if(mode==='osm3d'){
+   if(!/^[A-Za-z0-9._-]{30,2048}$/.test(osmKey)){setMessage('A valid Cesium ion assets:read access token is required.',true);return;}
+   if(!$('earth-osm-confirm').checked){setMessage('Confirm that Cesium ion streaming quota will be used.',true);return;}
+  }
   if(mode==='photoreal'){
     if(!/^[-\w]{12,256}$/.test(key)){
       setMessage('A valid Google Map Tiles API key is required.',true);return;
@@ -149,6 +166,18 @@ export function setupEarthMode({onActivate=()=>{},onDeactivate=()=>{}}={}){
    world.hidden=false;
    viewer=makeViewer(C,mode);
    mapCamera(C,viewer,city,mode);
+   if(mode==='osm3d'){
+    priorIonToken=C.Ion.defaultAccessToken;ionConfigured=true;
+    C.Ion.defaultAccessToken=osmKey;
+    // Explicitly authorized ion streaming. No ion requests in Atlas.
+    const terrain=await C.createWorldTerrainAsync();
+    if(current!==launching)return;
+    viewer.terrainProvider=terrain;
+    const osmTiles=await C.createOsmBuildingsAsync({showCreditsOnScreen:true,maximumScreenSpaceError:20});
+    if(current!==launching)return;
+    viewer.scene.primitives.add(osmTiles);
+    viewer.scene.requestRender();
+   }
    if(mode==='photoreal'){
       const url='https://tile.googleapis.com/v1/3dtiles/root.json?key='+encodeURIComponent(key);
       // Google API requests happen only after explicit opt-in.
@@ -161,18 +190,19 @@ export function setupEarthMode({onActivate=()=>{},onDeactivate=()=>{}}={}){
       viewer.scene.globe.show=false;
       viewer.scene.requestRender();
    }
-   liveMode=mode;
+   liveMode=mode;activeCity=city;
    document.body.classList.add('earth-mode');
    hud.hidden=false;
    $('earth-attribution').hidden=mode!=='atlas';
    $('earth-status').textContent=mode==='atlas'
     ?'WORLD ATLAS · OSM MAP ON 3D GLOBE'
+    :mode==='osm3d'?'REAL 3D BUILDINGS · CESIUM OSM'
     :'PHOTOREAL 3D · GOOGLE MAP TILES';
    $('earth-open').textContent='◎  EARTH MODE';
    modal.hidden=true;resetKey();setMessage('');
    onActivate(mode);
    $('studio').hidden=false;
-   const startCollapsed=window.matchMedia('(max-width:800px)').matches;
+   const startCollapsed=mode!=='atlas'||window.matchMedia('(max-width:800px)').matches;
    $('studio').classList.toggle('collapsed',startCollapsed);
    $('studio-toggle').setAttribute('aria-expanded',String(!startCollapsed));
    weather=makeWeatherStudio({C,viewer});
@@ -187,11 +217,55 @@ export function setupEarthMode({onActivate=()=>{},onDeactivate=()=>{}}={}){
    onDeactivate();
    setMessage(mode==='photoreal'
     ?'Photoreal tiles could not load. Verify Google Map Tiles API, billing, key restrictions and regional coverage.'
+    :mode==='osm3d'?'OSM 3D did not load. Verify Cesium ion token, asset permissions, quota and connectivity.'
     :'Unable to open the free atlas. Verify network/WebGL/CDN access and try again.',true);
   }finally{
    busy=false;modalButton.disabled=false;modalButton.textContent=oldLabel;
   }
  }
+ function startFlight(){
+  if(!viewer||viewer.isDestroyed()||!window.Cesium)return;
+  stopFlight();
+  const C=window.Cesium,city=CITIES[activeCity]||CITIES.goldcoast;
+  const isCoastal=activeCity==='goldcoast';
+  const points=isCoastal
+   ?[[-.012,.014,1350],[-.002,.011,950],[.010,.013,1350]]
+   :[[-.011,.011,1550],[0,.008,980],[.010,.012,1350]];
+  const currentFlight=++flightSerial;
+  $('earth-flight').textContent='Ⅱ FLIGHT RUNNING';
+  $('earth-status').textContent='CINEMATIC CAMERA · REAL GEOGRAPHIC COORDINATES';
+  function next(i){
+   if(!viewer||viewer.isDestroyed()||currentFlight!==flightSerial)return;
+   if(i>=points.length){
+    $('earth-flight').textContent='▶ CINEMATIC FLIGHT';
+    $('earth-status').textContent='CAMERA PATH FINISHED · REAL COORDINATES';
+    return;
+   }
+   const [dlat,dlon,h]=points[i];
+   const latitude=city.lat+dlat,longitude=city.lon+dlon;
+   // Curated demonstration camera path, NOT an observed aircraft route.
+   viewer.camera.flyTo({
+    destination:C.Cartesian3.fromDegrees(longitude,latitude,h),
+    orientation:{
+     heading:C.Math.toRadians(isCoastal?268:240),
+     pitch:C.Math.toRadians(i===1?-30:-40),
+     roll:0
+    },
+    duration:3.8,
+    complete:()=>{
+      if(currentFlight!==flightSerial)return;
+      flightTimeout=setTimeout(()=>{flightTimeout=null;next(i+1);},650);
+    },
+    cancel:()=>{if(currentFlight===flightSerial)stopFlight();}
+   });
+  }
+  next(0);
+ }
+ $('earth-flight').addEventListener('click',startFlight);
+ $('earth-flight-stop').addEventListener('click',()=>{
+  stopFlight();
+  if(viewer&&!viewer.isDestroyed())$('earth-status').textContent='CAMERA PAUSED · DRAG TO EXPLORE';
+ });
  $('studio-toggle').addEventListener('click',()=>{
   const collapsed=$('studio').classList.toggle('collapsed');
   $('studio-toggle').setAttribute('aria-expanded',String(!collapsed));
@@ -206,6 +280,7 @@ export function setupEarthMode({onActivate=()=>{},onDeactivate=()=>{}}={}){
  hud.querySelectorAll('[data-city]').forEach(el=>el.addEventListener('click',()=>{
   if(!viewer||!window.Cesium)return;
   const city=el.dataset.city;
+  stopFlight();activeCity=city;
   mapCamera(window.Cesium,viewer,city,liveMode);
   weather?.setCity();
  }));

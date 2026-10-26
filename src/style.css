@@ -182,3 +182,18 @@ body.earth-mode .scene-controls-toggle{display:none}
  body.focus-view .hero{bottom:74px}
  body.focus-view .hero h1{font-size:26px}
 }
+
+/* Real 3D provider: source-specific opt-in, credits and camera choreography. */
+#earth-osm-key{width:100%;height:42px;border:1px solid #a4b7c34b;background:#111f2e;color:white;padding:0 13px;outline-offset:2px;margin-bottom:16px;font-family:"DM Sans";font-size:12px}
+#earth-osm-key::placeholder{color:#8d9dab}
+#earth-osm-section .earth-consent input{accent-color:#d8bc87}
+#earth-flight{background:#d1b984!important;color:#112132!important;font-weight:800!important;border-color:#ecd5a8!important}
+#earth-flight:hover{background:#f5d9a2!important}
+#earth-flight-stop{background:#172b3fe8!important;border-color:#d3b48277!important}
+.earth-hud-bottom button{min-height:34px}
+body.earth-mode #earth-view .cesium-widget-credits{position:relative;z-index:10}
+@media(max-width:800px){
+ #earth-hud{right:12px;left:12px}
+ .earth-hud-bottom{max-width:100%;row-gap:4px}
+ #earth-flight,#earth-flight-stop{font-size:8px;padding:8px}
+}

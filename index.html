@@ -19,7 +19,7 @@
   <div id="earth-attribution" hidden>© OpenStreetMap contributors</div>
   <div id="earth-hud" hidden>
     <div class="earth-hud-top"><span class="earth-live">● &nbsp;LIVE EARTH</span><strong id="earth-status">ATLAS MODE · OPENSTREETMAP</strong><button type="button" id="earth-exit">✕ &nbsp; RETURN TO CITY</button></div>
-    <div class="earth-hud-bottom"><span>FLY TO</span><button type="button" data-city="goldcoast">GOLD COAST</button><button type="button" data-city="hcmc">HỒ CHÍ MINH</button><button type="button" data-city="singapore">SINGAPORE</button><button type="button" data-city="nyc">NEW YORK</button><button type="button" data-city="tokyo">TOKYO</button><span class="earth-note">DRAG TO ROTATE · SCROLL TO ZOOM</span></div>
+    <div class="earth-hud-bottom"><span>FLY TO</span><button type="button" data-city="goldcoast">GOLD COAST</button><button type="button" data-city="hcmc">HỒ CHÍ MINH</button><button type="button" data-city="singapore">SINGAPORE</button><button type="button" data-city="nyc">NEW YORK</button><button type="button" data-city="tokyo">TOKYO</button><button type="button" id="earth-flight">▶ CINEMATIC FLIGHT</button><button type="button" id="earth-flight-stop">■ STOP</button><span class="earth-note">DRAG TO ROTATE · SCROLL TO ZOOM</span></div>
   </div>
   <div id="studio" class="studio" hidden>
     <button type="button" id="studio-toggle" class="studio-toggle" aria-controls="studio-body" aria-expanded="true">☰ &nbsp; WEATHER + EDITOR <span id="studio-indicator">LIVE DATA</span></button>
@@ -70,7 +70,7 @@
       <div class="studio-buttons"><button id="camera-add">+ ADD VIEW</button><button id="camera-back">↶ REMOVE LAST</button><button id="camera-play">▶ PLAY ROUTE</button><button id="camera-stop">■ STOP</button><button id="camera-snap">↓ PNG</button><button id="camera-record">● RECORD WEBM</button></div>
       <label class="studio-slider-label" for="camera-duration">SECONDS PER CAMERA TRANSITION <span id="camera-duration-label">4.0 s</span></label><input type="range" id="camera-duration" min="2" max="12" value="4" step="0.5" aria-label="Camera flight duration per waypoint"/>
       <p id="camera-status" class="studio-hint" role="status">Add at least 2 camera viewpoints, then play the flyover. PNG/WebM exports include map credits; exports of Google Photoreal 3D are disabled until attribution-compliant recording is available.</p>
-      <div class="studio-sources">DATA: <a href="https://open-meteo.com/en/docs/ecmwf-api" target="_blank" rel="noopener noreferrer">Open-Meteo / ECMWF</a> · <a href="https://open-meteo.com/en/docs/marine-weather-api" target="_blank" rel="noopener noreferrer">Marine API</a><br/>Maps © OpenStreetMap contributors · CesiumJS. Google 3D requires a separate billable key.</div>
+      <div class="studio-sources">DATA: <a href="https://open-meteo.com/en/docs/ecmwf-api" target="_blank" rel="noopener noreferrer">Open-Meteo / ECMWF</a> · <a href="https://open-meteo.com/en/docs/marine-weather-api" target="_blank" rel="noopener noreferrer">Marine API</a><br/>Maps © OpenStreetMap contributors · CesiumJS. Real OSM 3D requires a Cesium ion token; Google Photoreal 3D requires a separately authorized billable key.</div>
     </div>
   </div>
   <canvas id="weather-fx" aria-hidden="true" hidden></canvas>
@@ -80,17 +80,19 @@
       <div class="earth-modal-top"><span>NEW EXPERIENCE / 002</span><button type="button" id="earth-dialog-close" aria-label="Close dialog">✕</button></div>
       <p class="earth-overline">EXPLORE THE REAL PLANET</p>
       <h2 id="earth-title">Go beyond<br/><em>the simulation.</em></h2>
-      <p class="earth-explain">Choose a real-world map experience. Your procedural coastal city stays safe and can be restored instantly.</p>
+      <p class="earth-explain">For location-accurate buildings choose Cesium OSM 3D; for textured photogrammetry choose Google 3D. Both require your own credentials. The free atlas contains 2D map tiles.</p>
       <fieldset class="earth-modes" aria-label="Earth map type">
         <label><input type="radio" name="earth-layer" value="atlas" checked/><span><strong>WORLD ATLAS</strong><small>OpenStreetMap imagery on a 3D globe · no key · 2D map detail</small></span></label>
+        <label><input type="radio" name="earth-layer" value="osm3d"/><span><strong>REAL 3D BUILDINGS (CESIUM OSM)</strong><small>Actual OSM building footprints and approximate heights · Cesium ion read token required · usage quota applies</small></span></label>
         <label><input type="radio" name="earth-layer" value="photoreal"/><span><strong>PHOTOREAL 3D TILES</strong><small>Google real-world photogrammetry · API key + billing required</small></span></label>
       </fieldset>
       <label class="earth-input-label" for="earth-city">STARTING LOCATION</label>
       <select id="earth-city"><option value="goldcoast">Gold Coast, Australia</option><option value="hcmc">Ho Chi Minh City, Vietnam</option><option value="singapore">Singapore</option><option value="nyc">New York City, USA</option><option value="tokyo">Tokyo, Japan</option></select>
+      <div id="earth-osm-section" hidden><label class="earth-input-label" for="earth-osm-key">CESIUM ION ACCESS TOKEN</label><input id="earth-osm-key" type="password" autocomplete="off" spellcheck="false" placeholder="Paste your assets:read Cesium ion token"/><p class="earth-warning">OSM 3D building tiles and terrain are served by Cesium ion. They use your account streaming quota. Use a scoped assets:read token. Token remains in this browser session and is cleared on exit.</p><label class="earth-consent"><input type="checkbox" id="earth-osm-confirm"/> I authorize Cesium ion requests on my account.</label></div>
       <div id="earth-key-section" hidden><label class="earth-input-label" for="earth-key">GOOGLE MAP TILES API KEY</label><input id="earth-key" type="password" autocomplete="off" spellcheck="false" placeholder="Paste a restricted Google API key"/><p class="earth-warning">3D Tiles uses a billable Google Maps API. Only continue with your own authorized, HTTP-referrer-restricted key. It is used for requests in this browser session, never saved or committed to GitHub.</p><label class="earth-consent"><input type="checkbox" id="earth-paid-confirm"/> I understand this mode makes billable API requests.</label></div>
       <p id="earth-message" class="earth-message" role="status" aria-live="polite"></p>
       <div class="earth-modal-actions"><button id="earth-cancel" type="button">CANCEL</button><button id="earth-launch" type="button">LAUNCH EARTH VIEW ↗</button></div>
-      <p class="earth-provider-note">OpenStreetMap © contributors · Google content © respective data providers · <a href="https://developers.google.com/maps/documentation/tile/usage-and-billing" target="_blank" rel="noopener noreferrer">Billing details</a></p>
+      <p class="earth-provider-note">OSM map/buildings © OpenStreetMap contributors · Cesium ion applies to OSM 3D. Google content © respective data providers · <a href="https://developers.google.com/maps/documentation/tile/usage-and-billing" target="_blank" rel="noopener noreferrer">Billing details</a></p>
     </section>
   </div>
   <div id="loading" role="status"><div class="load-mark">A<span>✦</span></div><div class="load-track"><div id="load-bar"></div></div><p>GENERATING YOUR CITY</p></div>

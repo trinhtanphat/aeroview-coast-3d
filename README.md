@@ -197,3 +197,31 @@ The remote WIN11-181 software-rendered WebGL session is severely GPU constrained
 ![V6 cinematic coastal renderer preview](preview.png)
 
 Regression tests: npm test, npm run test:browser, npm run test:mobile, npm run test:earth, npm run test:visual (new in V6), and optional historical GIS checks.
+
+
+## V7 — Real 3D buildings via opt-in Cesium ion
+
+AEROVIEW now offers three REAL EARTH modes:
+- WORLD ATLAS: free OpenStreetMap 2D map on globe, no ion account.
+- REAL 3D BUILDINGS (CESIUM OSM): geolocated OSM buildings and Cesium terrain, requires YOUR read-only Cesium ion token and explicit authorization.
+- PHOTOREAL 3D (GOOGLE): requires YOUR Google Map Tiles API key and explicit opt-in for billable usage.
+
+Unlike the invented coastal cubes on the homepage, Cesium OSM Buildings represents geographic building locations/footprints and approximate heights. However, it is NOT photogrammetry or a guarantee of visually photorealistic facade textures.
+
+### Enable OSM 3D buildings
+1. Obtain an assets:read token from https://ion.cesium.com/tokens and review license and usage quotas at https://cesium.com/platform/cesium-ion/pricing/.
+2. Select REAL EARTH > REAL 3D BUILDINGS (CESIUM OSM), paste the token, authorize Cesium ion streaming and launch.
+3. See streamed real-world buildings and terrain from your selected city. Use CINEMATIC FLIGHT / STOP for a designed camera path over geographic coordinates, NOT a recorded aircraft trajectory.
+4. Exit Earth mode to destroy the viewer and clear the typed key. Keys are never persisted in localStorage, Git or exported projects. The token is used for authenticated requests directly by the client browser during the authorized session.
+
+Cesium ion Community use is limited to personal/noncommercial projects and quotas; commercial use may require a paid license. See the provider's current pricing and terms. Google 3D Tiles is a separately billable service.
+
+PNG/WebM export is intentionally disabled for both external 3D providers pending a provider-specific attribution, license and permission review. Atlas export with OSM credits remains enabled.
+
+### Verification
+- npm run test:osm-provider: verifies no unauthorized ion/Google requests, invalid key/consent blocking, atlas operation, movie camera controls, input clearing.
+- npm run test:osm-mock: verifies the third-party initialization flow with mocked terrain and buildings, correct provider status, ion token restoration and no unintended ion calls.
+- Neither test proves real authenticated streaming works: no real user token was available on WIN11-181.
+- All existing regression tests for GUI, GIS editing, weather, capture and mobile should remain operational.
+
+References: https://cesium.com/platform/cesium-ion/content/cesium-osm-buildings/ ; https://cesium.com/learn/ion/cesium-ion-access-tokens/ ; https://developers.google.com/maps/documentation/tile/policies

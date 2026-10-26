@@ -357,7 +357,7 @@ export function makeEditorStudio({C,viewer,mode='atlas',buildings=null}){
    return canvas;
  };
  $('camera-snap').addEventListener('click',()=>{
-  if(mode==='photoreal'){camerastatus('Photoreal export disabled: Google attribution-compliant export is not implemented.');return;}
+  if(mode!=='atlas'){camerastatus('3D provider export disabled until provider-specific attribution and recording permissions are implemented.');return;}
   viewer.scene.requestRender();
   // A browser's WebGL drawing buffer can be cleared after present. Capture
   // immediately on Cesium postRender rather than long after the frame.
@@ -380,7 +380,7 @@ export function makeEditorStudio({C,viewer,mode='atlas',buildings=null}){
  }
  $('camera-record').addEventListener('click',()=>{
   if(recording){stopRecording();return;}
-  if(mode==='photoreal'){camerastatus('Photoreal video export disabled until Google attribution-compliant rendering is added.');return;}
+  if(mode!=='atlas'){camerastatus('3D provider video export disabled pending copyright/attribution-compliant recording.');return;}
   if(!viewer.scene.canvas.captureStream||!window.MediaRecorder){
    camerastatus('WEBM capture unsupported in this browser.');return;
   }
