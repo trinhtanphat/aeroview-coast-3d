@@ -110,3 +110,24 @@ npm run test:studio-mobile
 ```
 
 These tests use the installed Chrome browser with software WebGL fallback. Actual smoothness and quality need assessment on a machine with a capable GPU. No GitHub Actions pipeline is required.
+
+
+## SPATIAL WEATHER GRID + GEOJSON BUILDINGS (v1.2)
+
+![Nine ECMWF point samples visualized as local colored cells around Gold Coast](weather-grid-preview.png)
+
+### Spatial weather mapping (nine point samples)
+Open REAL EARTH → WORLD ATLAS → WEATHER + EDITOR → 01B / SPATIAL WEATHER GRID. Click SAMPLE 9 to request a 3 × 3 collection of point forecasts centered on the Cesium camera, with sampling points spaced approximately 9 km apart. This is one bounded multi-coordinate Open-Meteo API request. Select TEMPERATURE, PRECIPITATION, WIND SPEED or CLOUD COVER; change forecast hour, FIT AREA, or HIDE GRID.
+
+IMPORTANT: The colored rectangles represent samples in neighboring locations, not ECMWF's native 9 km grid cells, a continuous weather field, or scientifically validated interpolation. No claims are made about fine-scale weather variation between stations. Live multi-point sampling is user-initiated and limited to one request per 45 seconds per browser view. Open-Meteo noncommercial API limits and attribution requirements apply.
+
+### GeoJSON building extrusion
+In 02C / 3D BUILDING FOOTPRINTS, import your own appropriately licensed EPSG:4326 GeoJSON FeatureCollection containing Polygon or MultiPolygon building footprints. The browser extrudes using height or building:height when present; otherwise it estimates building:levels × 3 m, or explicitly assumes 12 m when height metadata is absent. Estimated heights are marked as estimates. Limits: 500 polygons, 18,000 vertices, 3 MB per file. Hide/show/remove affects only your overlay.
+
+This does NOT automatically download OpenStreetMap buildings, reconstruct a photorealistic city, modify Google imagery, or assert imported footprints are authoritative. You are responsible for obtaining and licensing geographic files.
+
+### Save and open a local project
+02B / PROJECT FILE allows you to download and reopen aeroview-project.json, saving PIN, PATH and AREA annotations and cinematic camera keyframes. It excludes API keys, map tiles, weather API responses, and separately imported building files (which must be re-imported). Input schemas, coordinate ranges, file sizes and record counts are validated before existing annotations are replaced. Project content is never uploaded by this feature.
+
+### Verification and limitations
+Run npm run test:grid-project on 181 for nine live weather samples, layers, malformed project protection, building GeoJSON import/toggle/clear and saved camera-keyframe restoration. The test building polygons are synthetic fixtures, NOT actual city geography. True realistic photogrammetric surfaces require an authorized map provider, billing where applicable, attribution compliance and GPU performance verification. The Facebook reference's global volumetric clouds and full atmospheric solver are not implemented in this demo.

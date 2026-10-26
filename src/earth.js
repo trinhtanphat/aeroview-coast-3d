@@ -2,6 +2,8 @@
 // No Google API key is persisted, placed in a URL hash, or bundled in this application.
 import {makeWeatherStudio} from './weather.js';
 import {makeEditorStudio} from './studio.js';
+import {makeSpatialWeatherGrid} from './weather-grid.js';
+import {makeBuildingOverlay} from './buildings.js';
 const CESIUM_VERSION = '1.145.0';
 const CESIUM_ROOT = `https://cdn.jsdelivr.net/npm/cesium@${CESIUM_VERSION}/Build/Cesium/`;
 const CITIES = Object.freeze({
@@ -78,7 +80,7 @@ function makeViewer(C, mode){
 }
 export function setupEarthMode({onActivate=()=>{},onDeactivate=()=>{}}={}){
  let viewer=null, liveMode=null, busy=false, launching=0;
- let weather=null,editor=null;
+ let weather=null,editor=null,weatherGrid=null,buildings=null;
  const originalCoordinates=document.querySelector('.coordinates')?.innerHTML;
  const modal=$('earth-dialog');
  const keyField=$('earth-key');
@@ -106,8 +108,8 @@ export function setupEarthMode({onActivate=()=>{},onDeactivate=()=>{}}={}){
   modal.hidden=true;resetKey();setMessage('');
  };
  function removeViewer(){
-  try{weather?.destroy();editor?.destroy();}catch(e){console.warn('Studio cleanup:',e.name);}
-  weather=null;editor=null;$('studio').hidden=true;
+  try{buildings?.destroy();weatherGrid?.destroy();weather?.destroy();editor?.destroy();}catch(e){console.warn('Studio cleanup:',e.name);}
+  buildings=null;weatherGrid=null;weather=null;editor=null;$('studio').hidden=true;
   try{if(viewer&&!viewer.isDestroyed())viewer.destroy();}catch(e){console.warn('Cesium cleanup:',e.message);}
   viewer=null;liveMode=null;
   world.replaceChildren();
@@ -173,6 +175,8 @@ export function setupEarthMode({onActivate=()=>{},onDeactivate=()=>{}}={}){
    $('studio').classList.toggle('collapsed',startCollapsed);
    $('studio-toggle').setAttribute('aria-expanded',String(!startCollapsed));
    weather=makeWeatherStudio({C,viewer});
+   weatherGrid=makeSpatialWeatherGrid({C,viewer});
+   buildings=makeBuildingOverlay({C,viewer});
    editor=makeEditorStudio({C,viewer,mode});
   }catch(err){
    // Do not print a URL or error that could contain the user's API key.
@@ -218,7 +222,7 @@ export function setupEarthMode({onActivate=()=>{},onDeactivate=()=>{}}={}){
   cameraLatitude:viewer?.camera?.positionCartographic?.latitude,
   cameraLongitude:viewer?.camera?.positionCartographic?.longitude,
   isViewerDestroyed:viewer?.isDestroyed?.(),
-  weather:weather?.diagnostics(),studio:editor?.diagnostics()
+  weather:weather?.diagnostics(),weatherGrid:weatherGrid?.diagnostics(),buildings:buildings?.diagnostics(),studio:editor?.diagnostics()
  });
  return {get active(){return Boolean(viewer)},get mode(){return liveMode},close:deactivate};
 }

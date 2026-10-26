@@ -1,0 +1,144 @@
+// Georeferenced local-neighborhood ECMWF point samples (~9 km spacing).
+// Each square is a visualization of ONE POINT, not a scientifically complete
+// model raster; grid is limited to nine locations per user-initiated request.
+const $=id=>document.getElementById(id);
+const LAYERS={
+ temp:{name:'TEMPERATURE',key:'temperature_2m',min:0,max:40,unit:'°C'},
+ rain:{name:'PRECIPITATION',key:'precipitation',min:0,max:15,unit:'mm/h'},
+ wind:{name:'WIND SPEED',key:'wind_speed_10m',min:0,max:90,unit:'km/h'},
+ cloud:{name:'CLOUD COVER',key:'cloud_cover',min:0,max:100,unit:'%'}
+};
+export function makeSpatialWeatherGrid({C,viewer}){
+ let active=true,locations=null,forecast=null,rectangles=[],centers=[],controller=null,loadedAt=0,lastRequestAt=0;
+ let lastCenter=null,layer='temp';
+ const status=s=>{$('grid-status').textContent=s};
+ const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
+ const toDeg=n=>C.Math.toDegrees(n);
+ const colorFor=(v,range)=>{
+   const t=clamp((v-range.min)/(range.max-range.min),0,1);
+   if(layer==='rain')return C.Color.fromHsl(.60-t*.60,.86,.50,.27);
+   if(layer==='temp')return C.Color.fromHsl(.68-t*.68,.85,.52,.30);
+   if(layer==='wind')return C.Color.fromHsl(.50-t*.45,.83,.49,.31);
+   return C.Color.fromHsl(.62-t*.58,.6,.52,.30);
+ };
+ function centerCoord(){
+   const carto=viewer.camera.positionCartographic;
+   return {lat:toDeg(carto.latitude),lon:toDeg(carto.longitude)};
+ }
+ function clearScene(){
+   rectangles.forEach(entity=>viewer.entities.remove(entity));
+   rectangles=[];
+   viewer.scene.requestRender();
+ }
+ function clear(){
+   controller?.abort();
+   clearScene();forecast=null;locations=null;lastCenter=null;
+   $('grid-legend').hidden=true;
+   status('Grid hidden. No further sampling is automatic.');
+ }
+ function valuesAt(hour){
+   if(!forecast)return [];
+   const key=LAYERS[layer].key;
+   return forecast.map((f)=>f?.hourly?.[key]?.[hour]);
+ }
+ function render(){
+   clearScene();
+   if(!forecast?.length||!locations?.length)return;
+   const idx=Math.max(0,Number($('studio-hour').value)||0);
+   const cfg=LAYERS[layer];
+   const vals=valuesAt(idx);
+   const missing=vals.filter(x=>x===null||x===undefined||!Number.isFinite(Number(x))).length;
+   for(let i=0;i<locations.length;i++){
+     const point=locations[i],value=vals[i];
+     if(value===null||value===undefined||!Number.isFinite(Number(value)))continue;
+     const cell=viewer.entities.add({
+      name:'ECMWF ~9km point sampled: '+cfg.name,
+      rectangle:{
+       coordinates:C.Rectangle.fromDegrees(point.w,point.s,point.e,point.n),
+       height:100,
+       material:colorFor(Number(value),cfg),
+       outline:true,outlineColor:C.Color.WHITE.withAlpha(.33)
+      }
+     });
+     rectangles.push(cell);
+     const text=Number(value).toFixed(value>=10||value===0?0:1)+' '+cfg.unit;
+     const label=viewer.entities.add({
+      position:C.Cartesian3.fromDegrees(point.lon,point.lat,140),
+      label:{
+       text,fillColor:C.Color.WHITE,font:'bold 15px sans-serif',
+       showBackground:true,backgroundColor:C.Color.fromCssColorString('#10273c').withAlpha(.77),
+       outlineColor:C.Color.BLACK,outlineWidth:2,style:C.LabelStyle.FILL_AND_OUTLINE,
+       heightReference:C.HeightReference.NONE,disableDepthTestDistance:1000000
+      }
+     });
+     rectangles.push(label);
+   }
+   $('grid-legend').hidden=false;
+   $('grid-legend-label').textContent=cfg.name+' — 9 SAMPLES × '+cfg.unit;
+   $('grid-range').textContent=cfg.min+' — '+cfg.max+' '+cfg.unit+' (colors clipped)';
+   const gradients={temp:'blue, #65bce0, #f7e16a, #e44c40',rain:'blue, #58aeff, #71db8b, #ffa33d, #e43e36',wind:'#1ce2b7, #45bdef, #faee67, #ef5b38',cloud:'#305a93, #6da4cb, #cfbfd7, #eee5e2'};
+   $('grid-color-scale').style.background='linear-gradient(90deg,'+gradients[layer]+')';
+   status('ECMWF IFS ~9 km model, 9 point samples · '+forecast[0].hourly.time[idx]+' UTC'+(missing?' · '+missing+' missing':'')+'. Squares are illustrative, NOT raw gridded forecast cells.');
+   viewer.scene.requestRender();
+ }
+ function makeLocations(center){
+   const latStep=9/111.32,lonStep=9/(111.32*Math.max(.2,Math.cos(center.lat*Math.PI/180)));
+   const points=[];
+   for(let j=-1;j<=1;j++)for(let i=-1;i<=1;i++){
+     const lat=clamp(center.lat+j*latStep,-85,85);
+     const lon=((center.lon+i*lonStep+540)%360)-180;
+     points.push({lat,lon,w:lon-lonStep*.49,e:lon+lonStep*.49,s:lat-latStep*.49,n:lat+latStep*.49});
+   }
+   return points;
+ }
+ async function sample(){
+   if(!active)return;
+   const center=centerCoord(),now=Date.now();
+   if(now-lastRequestAt<45000){
+     status('Rate protection: wait 45 seconds between grid requests. Switch layers freely without another request.');return;
+   }
+   const pts=makeLocations(center);
+   const qs=new URLSearchParams({
+    latitude:pts.map(p=>p.lat.toFixed(5)).join(','),
+    longitude:pts.map(p=>p.lon.toFixed(5)).join(','),
+    hourly:'temperature_2m,precipitation,wind_speed_10m,wind_direction_10m,cloud_cover',
+    models:'ecmwf_ifs',forecast_hours:'24',timezone:'UTC'
+   });
+   controller?.abort();controller=new AbortController();
+   const signal=controller.signal;
+   lastRequestAt=now;$('grid-sample').disabled=true;
+   status('Requesting 9 geographically spaced point forecasts in ONE Open-Meteo API call…');
+   try{
+    const res=await fetch('https://api.open-meteo.com/v1/ecmwf?'+qs.toString(),{signal,cache:'no-store'});
+    if(!res.ok)throw new Error('HTTP '+res.status);
+    const data=await res.json();
+    if(!active||signal.aborted)return;
+    if(!Array.isArray(data)||data.length!==9||data.some(s=>!s.hourly?.time?.length)){
+     throw new Error('Incomplete multi-point forecast');
+    }
+    forecast=data;locations=pts;lastCenter=center;loadedAt=Date.now();
+    render();
+   }catch(e){
+    if(e.name==='AbortError'||!active)return;
+    status('Weather grid unavailable: '+(e?.message||'unknown error')+'. No fabricated data shown.');
+   }finally{$('grid-sample').disabled=false;}
+ }
+ function fit(){
+  if(!lastCenter){status('First click SAMPLE 9 to fetch a grid.');return;}
+  viewer.camera.flyTo({
+   destination:C.Cartesian3.fromDegrees(lastCenter.lon,lastCenter.lat,53000),
+   orientation:{heading:0,pitch:C.Math.toRadians(-90),roll:0},
+   duration:1.6
+  });
+ }
+ $('grid-sample').addEventListener('click',sample);
+ $('grid-fit').addEventListener('click',fit);
+ $('grid-clear').addEventListener('click',clear);
+ $('grid-layer').addEventListener('change',ev=>{layer=ev.target.value;render();});
+ $('studio-hour').addEventListener('input',render);
+ return {
+  clear,render,
+  diagnostics:()=>({stations:forecast?.length||0,layer,values:valuesAt(Number($('studio-hour').value)||0),lastCenter,loadedAt}),
+  destroy(){active=false;controller?.abort();clearScene();$('grid-legend').hidden=true;}
+ };
+}

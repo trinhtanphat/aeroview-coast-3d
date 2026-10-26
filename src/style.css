@@ -121,3 +121,11 @@ body.earth-mode #earth-attribution{left:20px;right:auto;bottom:16px;z-index:7}
 
 @media(max-width:800px){body.earth-mode #earth-attribution{bottom:calc(66vh + 9px)}body.earth-mode:has(.studio.collapsed) #earth-attribution{bottom:61px}}
 @media(max-width:480px){body.earth-mode #earth-attribution{bottom:calc(60vh + 9px)}body.earth-mode:has(.studio.collapsed) #earth-attribution{bottom:57px}}
+
+.studio-input-caption{display:block;margin:10px 0 7px;color:#afc3ce;font:700 9px "Space Grotesk",sans-serif;letter-spacing:1px}
+.studio-select{width:100%;background:#152838;color:#e7e9ee;border:1px solid #9eb7c056;font:700 10px "Space Grotesk",sans-serif;padding:10px 12px;margin-bottom:8px}
+.studio-grid-legend{padding:10px 0;border-bottom:1px solid #ffffff20}
+.studio-grid-legend>span{display:block;font:700 9px "Space Grotesk",sans-serif;letter-spacing:1px;color:#d9c596}
+#grid-color-scale{height:12px;margin:8px 0 5px;background:linear-gradient(90deg,blue,#58aeff,#fed981,red);border:1px solid #ffffff40}
+#grid-range{font:500 9px "Space Grotesk",sans-serif;color:#b3c3ca;letter-spacing:.5px}
+.studio-buttons button:disabled{opacity:.45;cursor:wait}

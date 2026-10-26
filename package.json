@@ -13,6 +13,7 @@
     "test:studio": "node scripts/studio-test.mjs",
     "test:capture": "node scripts/capture-test.mjs",
     "test:studio-mobile": "node scripts/studio-mobile-test.mjs",
+    "test:grid-project": "node scripts/grid-project-test.mjs",
     "preview": "vite preview --host 127.0.0.1 --port 5188",
     "test": "node scripts/smoke.mjs"
   },
