@@ -3,6 +3,7 @@
 import * as maplibregl from 'maplibre-gl';
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
 import 'maplibre-gl/dist/maplibre-gl.css';
+import {createFreeCityControls} from './free-city-controls.js';
 
 const STYLE={
  version:8,name:'AEROVIEW | Geographic 3D City',
@@ -40,6 +41,7 @@ export async function createFreeBuildingsView({container,city='goldcoast'}={}){
  // OpenFreeMap official Vite integration: explicit MapLibre worker URL.
  maplibregl.setWorkerUrl(workerUrl);
  let active=true,loaded=false,steps=0,flightTimer=null,flightRunning=false;
+ let currentCity=city,controls=null;
  const child=document.createElement('div');
  child.className='free-city-viewport';
  child.setAttribute('aria-label','Real-location OpenFreeMap 3D city');
@@ -49,7 +51,7 @@ export async function createFreeBuildingsView({container,city='goldcoast'}={}){
   container:child,style:STYLE,
   center:[lon,lat],zoom:15.7,pitch:64,bearing:-26,
   maxPitch:80,antialias:true,attributionControl:true,
-  canvasContextAttributes:{antialias:true,preserveDrawingBuffer:false},
+  canvasContextAttributes:{antialias:true,preserveDrawingBuffer:true}, // user-initiated attributed PNG export
   fadeDuration:0,
   maxTileCacheSize:80
  });
@@ -82,7 +84,8 @@ export async function createFreeBuildingsView({container,city='goldcoast'}={}){
   map.setPaintProperty('building-3d','fill-extrusion-color',
    ['interpolate',['linear'],['coalesce',['get','render_height'],10],
     0,'#c7cbc4',35,'#d6ddd9',110,'#abc2c5',240,'#829fac']);
-  try{map.setLight({anchor:'map',color:'#fff6e7',intensity:.55,position:[1.4,205,40]});}catch{}
+  controls=createFreeCityControls({map,world:container,getCity:()=>currentCity,onStop:()=>stopFlight()});
+  controls.setMood('daylight');
   map.resize();
  }catch(err){map.remove();child.remove();throw err;}
  function stopFlight(){
@@ -92,6 +95,7 @@ export async function createFreeBuildingsView({container,city='goldcoast'}={}){
  }
  function setCity(id){
   if(!active)return;
+  currentCity=id;
   stopFlight();
   const [lng,latitude]=cityPosition(id);
   map.flyTo({center:[lng,latitude],zoom:15.7,pitch:64,bearing:-26,duration:1700,essential:true});
@@ -127,11 +131,13 @@ export async function createFreeBuildingsView({container,city='goldcoast'}={}){
    tilesLoaded:map.areTilesLoaded(),mapLoaded:map.loaded(),styleLoaded:map.isStyleLoaded(),
    sourceLoaded:map.isSourceLoaded('openmaptiles'),
    visibleBuildings:(()=>{try{return map.queryRenderedFeatures({layers:['building-3d']}).length}catch{return 0}})(),
+   visuals:controls?.diagnostics(),
    styleSource:'OpenFreeMap / OpenStreetMap',flightRunning,flightSteps:steps
   }),
   destroy(){
    if(!active)return;
    stopFlight();active=false;
+   controls?.destroy();controls=null;
    window.removeEventListener('resize',onResize);
    map.off('error',onError);
    map.remove();child.remove();

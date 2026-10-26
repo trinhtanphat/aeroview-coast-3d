@@ -6,7 +6,7 @@ page.setDefaultTimeout(15000);
 const err=[];
 page.on('pageerror',e=>err.push(e.message));
 await page.goto(process.env.TEST_BASE_URL || 'http://127.0.0.1:5188/',{waitUntil:'networkidle',timeout:30000});
-await page.locator('#loading.hidden').waitFor();
+await page.locator('#loading.hidden').waitFor({state:'attached',timeout:30000});
 await page.locator('#earth-open').click();
 await page.locator('#earth-launch').click();
 await page.locator('#earth-hud').waitFor({state:'visible',timeout:75000});

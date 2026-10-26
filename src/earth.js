@@ -133,7 +133,7 @@ export function setupEarthMode({onActivate=()=>{},onDeactivate=()=>{}}={}){
   world.hidden=true;hud.hidden=true;$('earth-attribution').hidden=true;
   const coord=document.querySelector('.coordinates');
   if(coord&&originalCoordinates)coord.innerHTML=originalCoordinates;
-  document.body.classList.remove('earth-mode');
+  document.body.classList.remove('earth-mode','free-city-mode','free-city-focus');
  }
  const deactivate=()=>{
   launching++;
@@ -162,7 +162,7 @@ export function setupEarthMode({onActivate=()=>{},onDeactivate=()=>{}}={}){
   modalButton.disabled=true;
   const oldLabel=modalButton.textContent;
   modalButton.textContent='PREPARING THE GLOBE…';
-  setMessage('Loading the Cesium 3D engine. The procedural city remains available.');
+  setMessage(mode==='free3d'?'Loading OpenFreeMap geolocated buildings without an API key…':'Loading the Cesium 3D engine. The procedural city remains available.');
   try{
    if(mode==='free3d'){
     const {createFreeBuildingsView}=await import('./free-city.js');
@@ -172,7 +172,7 @@ export function setupEarthMode({onActivate=()=>{},onDeactivate=()=>{}}={}){
     freeCity=await createFreeBuildingsView({container:world,city});
     if(current!==launching){freeCity.destroy();freeCity=null;return;}
     liveMode=mode;activeCity=city;
-    document.body.classList.add('earth-mode');
+    document.body.classList.add('earth-mode','free-city-mode');
     hud.hidden=false;$('earth-attribution').hidden=true;
     $('earth-status').textContent='FREE REAL-WORLD 3D CITY · OPENFREEMAP / OPENSTREETMAP';
     $('earth-open').textContent='◎  EARTH MODE';

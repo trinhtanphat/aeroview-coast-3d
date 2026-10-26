@@ -211,3 +211,59 @@ body.earth-mode #earth-view .cesium-widget-credits{position:relative;z-index:10}
 body.focus-view .hero-actions{flex-wrap:wrap}
 body.focus-view .real-3d-btn{height:37px;min-height:37px}
 @media(max-width:480px){body.focus-view .real-3d-btn{height:31px;min-height:31px;padding:0 8px;font-size:8px}}
+
+/* V9 • compact cinematic controls for the geographic free 3D viewer */
+#earth-view>.free-city-panel{
+ position:absolute;left:clamp(16px,4.3vw,65px);bottom:92px;z-index:5;
+ width:min(346px,calc(100vw - 32px));padding:17px 17px 14px;
+ color:#ebf4f5;background:linear-gradient(132deg,rgba(9,29,45,.91),rgba(8,38,57,.80));
+ border:1px solid rgba(233,238,232,.38);backdrop-filter:blur(12px);
+ font-family:"Space Grotesk",sans-serif;box-shadow:0 14px 42px #091c2c4a;
+ pointer-events:auto;
+}
+.free-city-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.free-city-head span{font-size:11px;font-weight:800;letter-spacing:1.3px;color:#f3d69f}
+.free-city-head small{font-size:8px;letter-spacing:.55px;color:#c0d3d6;white-space:nowrap}
+.free-city-note{font:400 10px/1.55 "Space Grotesk",sans-serif;color:#b5d3db;margin:8px 0 13px}
+.free-city-view{display:flex;gap:5px;margin-bottom:10px}
+.free-city-view button{flex:1;min-height:35px;border:1px solid #819eae77;background:#183c50;color:#d6e9eb;font:700 9px "Space Grotesk",sans-serif;cursor:pointer}
+.free-city-view button[aria-pressed="true"]{background:#dec28e;border-color:#efddb9;color:#162e3e}
+.free-city-actions{display:flex;align-items:center;gap:8px}
+.free-city-actions label{font:800 9px "Space Grotesk",sans-serif;letter-spacing:1px;color:#d6e5e3}
+.free-city-actions select{flex:1;min-width:0;min-height:36px;padding:0 7px;border:1px solid #c0d3d38a;background:#102d40;color:#f0e9dd;font:700 9px "Space Grotesk",sans-serif;cursor:pointer}
+.free-city-actions button{border:1px solid #e1c999;background:#dec28e;color:#193044;min-height:36px;padding:0 12px;font:800 10px "Space Grotesk",sans-serif;cursor:pointer}
+.free-city-status{font:500 10px/1.5 "Space Grotesk",sans-serif;color:#b8d6d9;margin:10px 0 0}
+.free-city-panel button.free-city-focus{position:absolute;top:-34px;right:0;min-width:114px;min-height:30px;padding:5px 10px;background:#f3dfb4;border:1px solid #eee4cb;color:#142d40;font:800 9px "Space Grotesk",sans-serif;cursor:pointer}
+body.free-city-focus .earth-hud-top,body.free-city-focus .earth-hud-bottom{display:none!important}
+body.free-city-focus #earth-view>.free-city-panel{width:auto;padding:0;background:transparent;border:0;box-shadow:none;backdrop-filter:none}
+body.free-city-focus #earth-view>.free-city-panel>*:not(.free-city-focus){display:none}
+body.free-city-focus #earth-view>.free-city-panel .free-city-focus{top:auto;bottom:0;right:0}
+body.free-city-mode .earth-hud-top,body.free-city-mode .earth-hud-bottom{max-width:max-content!important;min-width:0!important;padding:6px 8px!important}
+body.free-city-mode .earth-hud-top strong{font-size:9px}
+body.free-city-mode .earth-hud-bottom>span:first-child{font-size:8px}
+@media(max-width:800px){
+ #earth-view>.free-city-panel{left:10px;bottom:73px;width:min(316px,calc(100vw - 20px));padding:13px 12px}
+ .free-city-head span{font-size:10px}.free-city-head small{font-size:7px}
+ .free-city-view button{font-size:8px}
+ body.free-city-mode .earth-hud-bottom{max-width:calc(100vw - 25px)!important}
+}
+@media(max-width:440px){
+ .free-city-view button{min-height:32px}
+ .free-city-note{font-size:9px;margin:6px 0 8px}
+ #earth-view>.free-city-panel{padding:10px 10px 9px}
+}
+
+/* Focus mode must keep a real, clickable recovery area even on touch/mobile. */
+body.free-city-focus #earth-view>.free-city-panel{
+ position:absolute;left:16px;right:auto;bottom:18px;
+ width:146px;min-width:146px;min-height:36px;padding:0;
+ background:transparent;border:0;box-shadow:none;backdrop-filter:none;
+ z-index:8;pointer-events:auto;
+}
+body.free-city-focus #earth-view>.free-city-panel button.free-city-focus{
+ position:relative;inset:auto;display:block;
+ width:146px;min-height:36px;z-index:9;pointer-events:auto;
+}
+@media(max-width:800px){
+ body.free-city-focus #earth-view>.free-city-panel{left:10px;right:auto;bottom:44px}
+}

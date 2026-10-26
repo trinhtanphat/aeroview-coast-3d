@@ -248,3 +248,20 @@ Use npm run test:free-city. The automated browser test validates actual loading 
 ![Gold Coast OSM footprint buildings viewed in real-time through MapLibre and OpenFreeMap](free-city-preview.png)
 
 Other modes remain: free OSM Atlas with weather and GIS editor, Cesium OSM 3D by explicitly authorized ion token, and Google Photorealistic 3D by explicitly authorized billable Google key. No secrets were added to Git or browser persistent storage.
+
+
+## V9 — Geographic 3D: visual direction, cinematic composition, credited stills
+
+The geolocated FREE REAL-WORLD 3D CITY scene now features:
+
+- SKYLINE / COASTLINE / TOP DOWN camera presets. These are artist-directed camera angles around the currently selected city's real map coordinates, not recorded routes or authoritative survey camera locations.
+- DAYLIGHT / GOLDEN HOUR / BLUE HOUR cartographic atmosphere presets. MapLibre sky/horizon/fog and the light, water, roads, parks and building colors change together. This is an illustrative appearance preset, NOT observed current or forecast weather.
+- HIDE UI / SHOW UI for a clean full-screen map composition while keeping exit controls recoverable.
+- PNG: an operator-initiated screenshot of the geolocated map canvas, with a mandatory footer naming OpenStreetMap contributors, OpenFreeMap and MapLibre. The renderer uses a buffer-preserving canvas for this explicit export; screenshots are never automatic.
+- A live status showing loading progress and the number of rendered 3D footprints. The number is viewport-dependent, not the city's total buildings.
+
+The imagery remains map-style OpenStreetMap vector extrusions, NOT actual photographic facade textures or the Facebook author's private simulation data. Atmosphere presets and a more open interface cannot turn these coarse objects into Google Photorealistic 3D Tiles.
+
+Tests: npm run test:free-city validates actual 3D tiles, attributed PNG file, 3 atmospheres, top-down composition, focus mode and camera flight. npm run test:free-city-mobile checks the UI at 390 px. Existing Atlas, weather and project regressions should remain green.
+
+References: https://maplibre.org/maplibre-gl-js/docs/examples/sky-fog-terrain/ ; https://openfreemap.org/tos/ . OpenFreeMap access is provided as is; use the service responsibly, retain the map's attribution and consider self-hosting if business traffic grows.

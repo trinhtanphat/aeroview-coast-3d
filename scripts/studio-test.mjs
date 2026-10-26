@@ -8,7 +8,7 @@ const errors=[];
 page.on('pageerror',err=>errors.push(err.message));
 page.on('console',msg=>{if(msg.type()==='error'&&!msg.text().includes('favicon'))errors.push(msg.text().slice(0,280));});
 await page.goto(process.env.TEST_BASE_URL || 'http://127.0.0.1:5188/',{waitUntil:'networkidle',timeout:30000});
-await page.locator('#loading.hidden').waitFor();
+await page.locator('#loading.hidden').waitFor({state:'attached',timeout:30000});
 await page.locator('#earth-open').click();
 await page.locator('#earth-launch').click();
 await page.locator('#earth-hud').waitFor({state:'visible',timeout:75000});

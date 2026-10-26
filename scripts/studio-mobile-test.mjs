@@ -3,7 +3,7 @@ const browser=await chromium.launch({executablePath:'C:\\Program Files\\Google\\
 const page=await browser.newPage({viewport:{width:390,height:844},deviceScaleFactor:1,isMobile:true,hasTouch:true});
 const errors=[];page.on('pageerror',e=>errors.push(e.message));
 await page.goto(process.env.TEST_BASE_URL || 'http://127.0.0.1:5188/',{waitUntil:'networkidle',timeout:30000});
-await page.locator('#loading.hidden').waitFor();
+await page.locator('#loading.hidden').waitFor({state:'attached',timeout:30000});
 await page.locator('#earth-open').click();
 await page.locator('#earth-launch').click();
 await page.locator('#earth-hud').waitFor({state:'visible',timeout:75000});
