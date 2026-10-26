@@ -3,7 +3,7 @@ import {pathToFileURL} from 'node:url';
 import {resolve} from 'node:path';
 const browser=await chromium.launch({executablePath:'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',headless:true,args:['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader','--disable-gpu-sandbox','--no-sandbox']});
 const page=await browser.newPage({viewport:{width:1366,height:900}});
-const u=pathToFileURL(resolve('public/demo-flight-v10.webm')).href;
+const u=pathToFileURL(resolve(process.env.DEMO_VIDEO_PATH||'public/demo-flight-v10.webm')).href;
 await page.goto(u,{waitUntil:'domcontentloaded',timeout:20000});
 await page.waitForFunction(()=>document.querySelector('video')?.readyState>=2,{timeout:20000});
 const v=await page.evaluate(async()=>{

@@ -285,3 +285,14 @@ In FREE REAL-WORLD 3D CITY, move and rotate the map to a desirable first view an
 A and B contain only transient geographic camera coordinates (lon/lat, zoom, pitch, bearing) in memory of the current viewer. They are not automatically saved remotely or written into Git. The video uses OpenFreeMap vector buildings and retains attribution; this does not create a photorealistic city model.
 
 `npm run test:camera-route` validates saved A and B, custom camera movement, user-selected duration, WebM EBML integrity, flight/record cleanup, clearing and city changes, and zero Google/Cesium requests. `npm run test:free-city`, `npm run test:free-city-mobile`, `npm run test:free-city-video` and `npm run test:earth` cover regressions.
+
+
+## V12 — original decorative window facades (geographic buildings)
+
+REAL CITY 3D now defaults to a new **ILLUSTRATED WINDOW FACADES** rendering mode. The underlying footprints and approximate building heights still come from OpenStreetMap-derived OpenFreeMap vector tiles. The new 64×64px facade textures are generated **originally in browser canvas**, with stylized glass, shaded windows, balcony bands and varied warm/modern/high-rise color palettes. Buildings retain their geographic location and height; the appearance of the windows is artistic and should **never be mistaken for actual building photographs, accurate architecture, or photogrammetric reconstruction**. This is a useful visual improvement for cinematic OSM maps, not a substitute for licensed real 3D Tiles.
+
+The switch in the map control panel can disable patterned facades to return to the original, simpler neutral extrusions (also useful if a computer has a weak GPU). Both the attributed PNG and the operator-triggered attributed WebM include the currently selected rendering mode. No satellite/Google imagery, provider keys, or paid Google/Cesium ion requests are needed.
+
+**Verification:** Run `npm run test:facades` for baseline-versus-textured visual screenshots, mode switch, building count and browser errors. Use `npm run test:free-city-video` with SAVE_V12_PREVIEW=1 on a local developer machine to intentionally save a short `public/demo-flight-v12.webm` example. Run mobile, camera A/B, and Cesium Atlas regressions before release. Example current screenshot: `free-city-preview.png`. Example short video: `https://trinhtanphat.github.io/aeroview-coast-3d/demo-flight-v12.webm`.
+
+MapLibre fill-extrusion-pattern support: https://maplibre.org/maplibre-style-spec/layers/ ; OpenFreeMap usage: https://openfreemap.org/tos/ . All source provider attribution must remain visible in exported stills/clips.

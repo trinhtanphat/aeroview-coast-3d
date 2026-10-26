@@ -1,5 +1,6 @@
 import {applyCityMood,cityView} from './free-city-visuals.js';
 import {makeCityVideoRecorder} from './free-city-video.js';
+import {setFacadeDetail} from './free-city-facades.js';
 
 // Controls exist only during the free OSM MapLibre viewer session.
 export function createFreeCityControls({map,world,getCity,onStop,onStartFlight,onCapture,onClear}){
@@ -9,6 +10,7 @@ export function createFreeCityControls({map,world,getCity,onStop,onStartFlight,o
  panel.innerHTML=[
   '<div class="free-city-head"><span>◈ &nbsp; AEROVIEW / REAL CITY</span><small>GEOGRAPHIC VECTOR MODEL</small></div>',
   '<p class="free-city-note">Real OSM building locations · approximate heights · not aerial photogrammetry</p>',
+  '<label class="free-city-facade-toggle"><input type="checkbox" id="free-city-facades"/> <span>ILLUSTRATED WINDOW FACADES</span><small>Original decorative pattern · not real facade imagery</small></label>',
   '<div class="free-city-view" role="group" aria-label="Camera view">',
   '<button type="button" data-free-view="coast">COASTLINE</button>',
   '<button type="button" data-free-view="skyline" aria-pressed="true">SKYLINE</button>',
@@ -31,12 +33,15 @@ export function createFreeCityControls({map,world,getCity,onStop,onStartFlight,o
  const signal={signal:ac.signal};
  const status=panel.querySelector('.free-city-status');
  const focus=panel.querySelector('.free-city-focus');
- let active=true,mood='daylight',focused=false,count=0,tilesReady=false,captureCount=0;
+ let active=true,mood='daylight',focused=false,count=0,tilesReady=false,captureCount=0,facadeDetail=false;
  const recButton=panel.querySelector('#free-city-record');
  const recStop=panel.querySelector('#free-city-record-stop');
  const recording=makeCityVideoRecorder({map,onStartFlight,onStopFlight:onStop,onStatus:s=>{if(active)status.textContent=s;}});
  const cameraStatus=panel.querySelector('.free-city-camera-status');
  const clipLength=panel.querySelector('#free-record-length');
+ // Default to richer original cladding. Users can disable it to reduce visual complexity.
+ try{facadeDetail=setFacadeDetail(map,true);panel.querySelector('#free-city-facades').checked=facadeDetail;}
+ catch(e){facadeDetail=false;console.warn('Optional facade material fallback:',e?.name);}
  let capturedA=false,capturedB=false;
  const refreshCameraPoints=()=>{
   cameraStatus.textContent=capturedA&&capturedB?'CUSTOM A → B ROUTE READY · Choose RECORD or CINEMATIC FLIGHT':
@@ -75,6 +80,11 @@ export function createFreeCityControls({map,world,getCity,onStop,onStartFlight,o
   },signal);
  }
  panel.querySelector('#free-city-mood').addEventListener('change',e=>setMood(e.target.value),signal);
+ panel.querySelector('#free-city-facades').addEventListener('change',e=>{
+  try{facadeDetail=setFacadeDetail(map,e.target.checked);}catch(err){
+   facadeDetail=false;e.target.checked=false;status.textContent='Facade pattern unavailable: '+(err?.name||'Render error');
+  }
+ },signal);
  for(const [key,id] of [['start','#free-camera-a'],['end','#free-camera-b']]){
   panel.querySelector(id).addEventListener('click',()=>{
    if(recording.diagnostics().recording)return;
@@ -131,7 +141,7 @@ export function createFreeCityControls({map,world,getCity,onStop,onStartFlight,o
  return {
   update,setMood,
   refreshCameraPoints:()=>{capturedA=false;capturedB=false;refreshCameraPoints();},
-  diagnostics:()=>({mood,focused,tilesReady,visibleBuildings:count,captures:captureCount,
+  diagnostics:()=>({mood,focused,tilesReady,visibleBuildings:count,captures:captureCount,facadeDetail,
    customCamera:{start:capturedA,end:capturedB},clipLength:Number(clipLength.value),video:recording.diagnostics()}),
   destroy(){
    if(!active)return;

@@ -23,7 +23,7 @@ const active=await page.evaluate(()=>window.__AEROVIEW_EARTH_DIAGNOSTICS__().fre
 const videoDownload=await downloadEvent;
 if(!videoDownload){console.log('NO_VIDEO',JSON.stringify(await page.evaluate(()=>({video:window.__AEROVIEW_EARTH_DIAGNOSTICS__()?.freeMap?.visuals?.video,status:document.querySelector('.free-city-status')?.textContent}))));await browser.close();process.exit(2);}
 const data=readFileSync(await videoDownload.path());
-if(!process.env.TEST_BASE_URL)writeFileSync('demo-flight-v10.webm',data);
+if(process.env.SAVE_V12_PREVIEW==='1'&&!process.env.TEST_BASE_URL)writeFileSync('public/demo-flight-v12.webm',data);
 const saved=await page.evaluate(()=>window.__AEROVIEW_EARTH_DIAGNOSTICS__().freeMap.visuals.video);
 await page.locator('#earth-exit').click();
 const closed=await page.evaluate(()=>!window.__AEROVIEW_EARTH_DIAGNOSTICS__().active);
