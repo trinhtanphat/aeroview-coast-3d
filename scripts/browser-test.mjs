@@ -11,6 +11,8 @@ await page.goto(process.env.TEST_BASE_URL || 'http://127.0.0.1:5188/',{waitUntil
 await page.waitForTimeout(4000);
 const results={title:await page.title(), canvas:await page.locator('#world').count(), loadingHidden:await page.locator('#loading').evaluate(el=>el.classList.contains('hidden')),fps:await page.locator('#fps').innerText(),altitude:await page.locator('#altitude').innerText(),webgl:await page.evaluate(()=>{const c=document.createElement('canvas');return !!(c.getContext('webgl2')||c.getContext('webgl'))}),errorCount:errors.length};
 if(!process.env.TEST_BASE_URL) await page.screenshot({path:'preview.png',fullPage:false});
+await page.locator('#scene-controls-toggle').click();
+results.controlsExpanded=await page.locator('#panel').isVisible();
 await page.getByRole('button',{name:'TOP DOWN'}).click();
 await page.waitForTimeout(1500);
 results.cameraView=await page.locator('[data-view=overhead]').getAttribute('class');

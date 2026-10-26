@@ -1,0 +1,16 @@
+import {chromium} from 'playwright-core';
+const browser=await chromium.launch({executablePath:'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',headless:true,args:['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader','--disable-gpu-sandbox','--no-sandbox','--disable-dev-shm-usage']});
+const page=await browser.newPage({viewport:{width:1440,height:900},deviceScaleFactor:1});
+const errors=[];page.on('pageerror',e=>errors.push(e.stack||e.message));
+page.on('console',m=>{if(m.type()==='error')errors.push('console: '+m.text())});
+await page.goto(process.env.TEST_BASE_URL||'http://127.0.0.1:5188/',{waitUntil:'networkidle',timeout:30000});
+await page.waitForTimeout(4500);
+await page.screenshot({path:'visual-v6-first.png'});
+const diagnostics=await page.evaluate(()=>window.__AEROVIEW_DIAGNOSTICS__?.());
+const initial={focus:await page.evaluate(()=>document.body.classList.contains('focus-view')),toggleVisible:await page.locator('#scene-controls-toggle').isVisible(),panelVisible:await page.locator('#panel').isVisible(),loadingHidden:await page.locator('#loading').evaluate(el=>el.classList.contains('hidden')),fps:await page.locator('#fps').innerText(),diag:diagnostics,errors};
+await page.locator('#scene-controls-toggle').click();
+const open={panelVisible:await page.locator('#panel').isVisible(),toggleText:await page.locator('#scene-controls-toggle').innerText()};
+await page.screenshot({path:'visual-v6-controls.png'});
+console.log(JSON.stringify({initial,open},null,2));
+await browser.close();
+if(errors.length||!initial.focus||initial.panelVisible||!open.panelVisible||!initial.loadingHidden)process.exit(1);

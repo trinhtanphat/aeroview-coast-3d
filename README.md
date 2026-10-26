@@ -185,3 +185,15 @@ The GEOJSON DATA export includes the sampled point count and UTC forecast hour, 
 **Tests:** npm run test:regional checks 14 behaviors using a real 25-point Open-Meteo response, including 100 IDW patches, wind vectors, tracer movement, GeoJSON provenance, no unexpected API requests during editing, cleanup and JavaScript errors. npm run test:v3, npm run test:v4 and npm run test:studio-mobile check backwards compatibility. Regional screenshot: regional-25-preview.png.
 
 ![Regional spatial weather estimate over Gold Coast, with OpenStreetMap credits](regional-25-preview.png)
+
+## Visual redesign — cinematic coastal study
+
+The homepage now prioritizes the actual 3D scenery rather than the dashboard: a Gold Coast-inspired shoreline camera angle, bright midday lighting, turquoise nearshore water, deeper-blue ocean, surf ribbons, facade materials with windows and balcony details, softer cloud masses, architectural shadow overlays and a smaller caption. The technical panel is hidden initially; click **SCENE SETTINGS** to restore all camera, daylight, haze, quality and lighting controls. **REAL EARTH** and the weather/GIS editor remain available.
+
+All procedurally generated pixels, buildings and textures are original to this demo and **not a geodetically correct reconstruction of Surfers Paradise or Google photogrammetry**. The reference video contains aerial terrain/buildings with much more realistic assets. Matching it closely would require an appropriately licensed 3D Tiles/photogrammetry/terrain dataset and capable GPU hardware. The existing opt-in Google Photorealistic 3D Tiles provider requires an authorized restricted API key and billing; the site does not contain or silently use one.
+
+The remote WIN11-181 software-rendered WebGL session is severely GPU constrained (observed single-digit FPS); use a real GPU-enabled Chromium browser for practical visual quality. The quality button offers ECO / BALANCED / ULTRA, and AUTO scales resolution to prevent total stalls.
+
+![V6 cinematic coastal renderer preview](preview.png)
+
+Regression tests: npm test, npm run test:browser, npm run test:mobile, npm run test:earth, npm run test:visual (new in V6), and optional historical GIS checks.

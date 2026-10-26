@@ -6,6 +6,7 @@ for(const [width,height] of [[390,844],[768,1024]]){
  page.on('pageerror',e=>errors.push(e.message));
  await page.goto('http://127.0.0.1:5188/',{waitUntil:'networkidle',timeout:30000});
  await page.waitForTimeout(1700);
+ await page.locator('#scene-controls-toggle').click();
  const before=await page.evaluate(()=>({scrollWidth:document.documentElement.scrollWidth,innerWidth:window.innerWidth,mainClient:document.querySelector('.main-layout').clientHeight,mainScroll:document.querySelector('.main-layout').scrollHeight,panelBottom:Math.round(document.querySelector('#panel').getBoundingClientRect().bottom),cssPointer:getComputedStyle(document.querySelector('.main-layout')).pointerEvents,hit:document.elementFromPoint(180,420)?.outerHTML.slice(0,180)}));
  await page.mouse.move(Math.min(width/2,180),Math.min(height/2,460));
  await page.mouse.wheel(0,380);await page.waitForTimeout(300);

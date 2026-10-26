@@ -141,3 +141,44 @@ body.earth-mode #earth-attribution{left:20px;right:auto;bottom:16px;z-index:7}
 .timeline-controls .timeline-loop{display:flex;align-items:center;gap:4px;cursor:pointer}
 .timeline-controls input{accent-color:#e0c08a}
 @media(max-width:480px){.timeline-controls{gap:5px}.timeline-controls button,.timeline-controls select{padding:6px 7px;font-size:8px}}
+
+/* V6: cinematic-first layout. Full technical UI remains one click away. */
+#vignette{background:linear-gradient(180deg,rgba(3,20,33,.27),transparent 27%,transparent 69%,rgba(3,18,27,.38) 100%);transition:opacity .3s}
+.topbar{height:77px;background:rgba(9,32,48,.23);backdrop-filter:blur(5px)}
+.bottombar{height:70px;background:rgba(10,32,44,.24);backdrop-filter:blur(4px)}
+.scene-controls-toggle{display:inline-flex;align-items:center;white-space:nowrap;background:rgba(8,35,53,.72);color:#f5e8d3;border:1px solid #ffffff6c;font:700 10px "Space Grotesk",sans-serif;letter-spacing:.85px;padding:12px 13px;transition:background .2s}
+.scene-controls-toggle:hover{background:#133e58}
+body.focus-view .control-panel{display:none}
+body.focus-view .main-layout{padding:0;justify-content:flex-end;pointer-events:none}
+body.focus-view .hero{position:absolute;bottom:92px;left:clamp(20px,4.3vw,86px);max-width:360px;margin:0;padding:16px 19px;background:linear-gradient(110deg,rgba(8,32,48,.69),rgba(8,32,48,.17));backdrop-filter:blur(5px);border-left:2px solid #eacb91;pointer-events:auto}
+body.focus-view .hero .eyebrow{font-size:8px;letter-spacing:1.7px}
+body.focus-view .hero h1{font-size:clamp(30px,3vw,42px);letter-spacing:-1.8px;line-height:1.02;margin:8px 0 9px}
+body.focus-view .hero .subline{display:none}
+body.focus-view .hero-actions{margin-top:15px;gap:7px}
+body.focus-view .primary-btn,body.focus-view .secondary-btn{height:37px;min-width:0;font-size:9px;padding:0 10px;letter-spacing:.3px}
+body.focus-view .primary-btn .btn-arrow{display:none}
+body.focus-view .metric strong{font-size:16px}
+body.focus-view .metric>span{font-size:8px}
+body.focus-view .metrics{gap:22px}
+body.focus-view .bottom-right{font-size:8px}
+body.focus-view .header-center{display:none}
+body.focus-view .topbar{border-bottom-color:rgba(255,255,255,.2)}
+body.earth-mode .scene-controls-toggle{display:none}
+@media(max-width:1100px){.scene-controls-toggle{padding:9px;font-size:9px}.top-right{gap:10px}}
+@media(max-width:800px){
+ .topbar{height:69px}.bottombar{height:64px}
+ body.focus-view .main-layout{overflow:visible;touch-action:none}
+ body.focus-view .hero{left:12px;bottom:74px;padding:10px 13px;max-width:min(330px,calc(100vw - 24px))}
+ body.focus-view .hero .eyebrow{display:none}
+ body.focus-view .hero h1{font-size:30px;line-height:1;margin:2px 0 8px}
+ body.focus-view .hero-actions{margin-top:7px}
+ body.focus-view .hero .primary-btn,body.focus-view .hero .secondary-btn{height:32px;font-size:8px}
+ .scene-controls-toggle{font-size:8px;padding:9px 7px;letter-spacing:0}
+}
+@media(max-width:480px){
+ .brand{font-size:13px;gap:4px}.brand-mark{font-size:18px}
+ .top-right{gap:5px}
+ .scene-controls-toggle{font-size:7px;padding:8px 6px}
+ body.focus-view .hero{bottom:74px}
+ body.focus-view .hero h1{font-size:26px}
+}

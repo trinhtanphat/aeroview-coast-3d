@@ -38,7 +38,7 @@ if(atlasOutcome==='active'){
 }
 const restored=await page.locator('#world').isVisible() && !(await page.locator('body').getAttribute('class'))?.includes('earth-mode');
 const hasKeyAfterExit=await page.locator('#earth-key').inputValue();
-const restoredCoords=(await page.locator('.coordinates').innerText()).includes('COASTAL DISTRICT');
+const restoredCoords=(await page.locator('.coordinates').innerText()).includes('ORIGINAL PROCEDURAL SCENE');
 const report={modalOpen,keyShown,invalidKeyMessage,noBilledRequest,atlasOutcome,earthVisible,osmCredit:osmCredit.slice(0,180),cesiumPresent,atlasCreditShown,restored,restoredCoords,keyErased:hasKeyAfterExit==='',jsErrors,warnings};
 console.log(JSON.stringify(report,null,2));
 await browser.close();
