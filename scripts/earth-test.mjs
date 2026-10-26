@@ -27,14 +27,17 @@ const atlasCreditShown=await page.locator('#earth-attribution').isVisible();
 if(atlasOutcome==='active'){
  await page.locator('[data-city=singapore]').click();
  await page.waitForTimeout(8500);
+ const coordInAtlas=await page.locator('.coordinates').innerText();
  const geoDiag=await page.evaluate(()=>({earth:window.__AEROVIEW_EARTH_DIAGNOSTICS__?.(),osmRequests:performance.getEntriesByType('resource').filter(r=>r.name.includes('tile.openstreetmap.org')).length,cesiumCanvas:!!document.querySelector('#earth-view canvas')}));
+ if(!coordInAtlas.includes('SINGAPORE'))throw new Error('Earth coordinates did not update to Singapore');
  console.log('EARTH DIAGNOSTICS',JSON.stringify(geoDiag));
  await page.screenshot({path:'earth-atlas-preview.png'});
  await page.locator('#earth-exit').click();
 }
 const restored=await page.locator('#world').isVisible() && !(await page.locator('body').getAttribute('class'))?.includes('earth-mode');
 const hasKeyAfterExit=await page.locator('#earth-key').inputValue();
-const report={modalOpen,keyShown,invalidKeyMessage,noBilledRequest,atlasOutcome,earthVisible,osmCredit:osmCredit.slice(0,180),cesiumPresent,atlasCreditShown,restored,keyErased:hasKeyAfterExit==='',jsErrors,warnings};
+const restoredCoords=(await page.locator('.coordinates').innerText()).includes('COASTAL DISTRICT');
+const report={modalOpen,keyShown,invalidKeyMessage,noBilledRequest,atlasOutcome,earthVisible,osmCredit:osmCredit.slice(0,180),cesiumPresent,atlasCreditShown,restored,restoredCoords,keyErased:hasKeyAfterExit==='',jsErrors,warnings};
 console.log(JSON.stringify(report,null,2));
 await browser.close();
-if(!modalOpen || !keyShown || !invalidKeyMessage.includes('key')|| !noBilledRequest || atlasOutcome!=='active' || !cesiumPresent || !atlasCreditShown || !restored || jsErrors.length)process.exit(1);
+if(!modalOpen || !keyShown || !invalidKeyMessage.includes('key')|| !noBilledRequest || atlasOutcome!=='active' || !cesiumPresent || !atlasCreditShown || !restored || !restoredCoords || jsErrors.length)process.exit(1);

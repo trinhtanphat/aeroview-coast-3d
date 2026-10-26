@@ -39,6 +39,14 @@ function loadCesium(){
 }
 function mapCamera(C,viewer,city,mode){
  const p=CITIES[city]||CITIES.goldcoast;
+ const coord=document.querySelector('.coordinates');
+ if(coord){
+   const lat=Math.abs(p.lat).toFixed(3)+'° '+(p.lat>=0?'N':'S');
+   const lon=Math.abs(p.lon).toFixed(3)+'° '+(p.lon>=0?'E':'W');
+   const label=document.createElement('strong');
+   label.textContent=p.name+' / '+(mode==='atlas'?'WORLD ATLAS':'PHOTOREAL 3D');
+   coord.replaceChildren(document.createTextNode(lat+' · '+lon),document.createElement('br'),label);
+ }
  viewer.camera.setView({
   destination:C.Cartesian3.fromDegrees(p.lon,p.lat,mode==='photoreal'?p.alt:p.alt*3.5),
   orientation:{heading:C.Math.toRadians(0),pitch:C.Math.toRadians(-58),roll:0}
@@ -68,6 +76,7 @@ function makeViewer(C, mode){
 }
 export function setupEarthMode({onActivate=()=>{},onDeactivate=()=>{}}={}){
  let viewer=null, liveMode=null, busy=false, launching=0;
+ const originalCoordinates=document.querySelector('.coordinates')?.innerHTML;
  const modal=$('earth-dialog');
  const keyField=$('earth-key');
  const message=$('earth-message');
@@ -98,6 +107,8 @@ export function setupEarthMode({onActivate=()=>{},onDeactivate=()=>{}}={}){
   viewer=null;liveMode=null;
   world.replaceChildren();
   world.hidden=true;hud.hidden=true;$('earth-attribution').hidden=true;
+  const coord=document.querySelector('.coordinates');
+  if(coord&&originalCoordinates)coord.innerHTML=originalCoordinates;
   document.body.classList.remove('earth-mode');
  }
  const deactivate=()=>{
