@@ -101,7 +101,42 @@ export function makeBuildingOverlay({C,viewer}){
   remove();visible=true;$('buildings-toggle').textContent='◉ HIDE';
   status('Local building extrusions removed; background map unchanged.');
  });
+ function exportSnapshot(){
+   return {schema:'aeroview-buildings-v1',visible,items:features.map(f=>({
+    rings:f.rings.map(r=>r.map(p=>p.slice())),height:f.height,assumed:f.assumed,name:f.name
+   }))};
+ }
+ function validateSnapshot(snapshot){
+   if(snapshot===null||snapshot===undefined)return {schema:'aeroview-buildings-v1',visible:true,items:[]};
+   if(snapshot.schema!=='aeroview-buildings-v1'||typeof snapshot.visible!=='boolean'||!Array.isArray(snapshot.items)||snapshot.items.length>MAX_BUILDINGS){
+    throw new Error('Invalid building snapshot schema.');
+   }
+   let vertices=0;
+   const items=snapshot.items.map(f=>{
+    if(!f||!Array.isArray(f.rings)||!f.rings.length||!f.rings.every(goodRing)||
+       typeof f.height!=='number'||!Number.isFinite(f.height)||f.height<2||f.height>450||
+       typeof f.assumed!=='boolean'||typeof f.name!=='string'||f.name.length>100){
+      throw new Error('Invalid building footprint or height in project.');
+    }
+    vertices+=f.rings.reduce((n,r)=>n+r.length,0);
+    if(vertices>MAX_VERTICES)throw new Error('Project exceeds building vertex limit.');
+    return {rings:f.rings.map(r=>r.map(p=>[p[0],p[1]])),height:f.height,
+       assumed:f.assumed,name:f.name.slice(0,60)};
+   });
+   return {schema:'aeroview-buildings-v1',visible:snapshot.visible,items};
+ }
+ function restoreSnapshot(snapshot){
+   const checked=validateSnapshot(snapshot);
+   remove();features=checked.items;visible=checked.visible;
+   for(const f of features)entities.push(add(f));
+   for(const e of entities)e.show=visible;
+   $('buildings-toggle').textContent=visible?'◉ HIDE':'◉ SHOW';
+   status('Restored '+entities.length+' project building extrusions ('+features.filter(f=>f.assumed).length+' height estimates).');
+   viewer.scene.requestRender();
+ }
  return {
+  exportSnapshot,validateSnapshot,restoreSnapshot,
+  clear:()=>{remove();visible=true;$('buildings-toggle').textContent='◉ HIDE';},
   diagnostics:()=>({count:entities.length,visible,assumed:features.filter(f=>f.assumed).length}),
   destroy(){active=false;remove();}
  };

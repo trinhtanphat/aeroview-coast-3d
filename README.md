@@ -127,7 +127,24 @@ In 02C / 3D BUILDING FOOTPRINTS, import your own appropriately licensed EPSG:432
 This does NOT automatically download OpenStreetMap buildings, reconstruct a photorealistic city, modify Google imagery, or assert imported footprints are authoritative. You are responsible for obtaining and licensing geographic files.
 
 ### Save and open a local project
-02B / PROJECT FILE allows you to download and reopen aeroview-project.json, saving PIN, PATH and AREA annotations and cinematic camera keyframes. It excludes API keys, map tiles, weather API responses, and separately imported building files (which must be re-imported). Input schemas, coordinate ranges, file sizes and record counts are validated before existing annotations are replaced. Project content is never uploaded by this feature.
+02B / PROJECT FILE allows you to download and reopen aeroview-project.json, saving PIN, PATH and AREA annotations and cinematic camera keyframes. Project format v2 also saves locally imported 3D building footprints, their height assumptions, layer visibility, and camera transition seconds. Version v1 files remain supported. It still excludes API keys, map imagery and live weather forecast responses. Input schemas, coordinate ranges, file sizes and record counts are validated before existing annotations are replaced. Project content is never uploaded by this feature.
 
 ### Verification and limitations
 Run npm run test:grid-project on 181 for nine live weather samples, layers, malformed project protection, building GeoJSON import/toggle/clear and saved camera-keyframe restoration. The test building polygons are synthetic fixtures, NOT actual city geography. True realistic photogrammetric surfaces require an authorized map provider, billing where applicable, attribution compliance and GPU performance verification. The Facebook reference's global volumetric clouds and full atmospheric solver are not implemented in this demo.
+
+
+## V3 — WIND FIELD, WEATHER EXPORT AND PORTABLE SCENE PROJECTS
+
+### Wind flow visualization
+On the nine-point ECMWF spatial weather grid, choose WIND SPEED. White arrows point toward the direction of flow, derived from the meteorological direction FROM plus 180 degrees. They indicate nine forecast vectors only, not continuous streamlines or a three-dimensional wind solver. Toggle WIND ARROWS without making more weather API requests.
+
+### Nine station points as GeoJSON
+The GRID → GEOJSON DATA button exports the selected UTC forecast hour as nine georeferenced GeoJSON Point features. Their properties include temperature, precipitation, wind speed, meteorological wind direction, cloud cover, forecast time and explicit point-sample provenance. These data are neither the native ECMWF model grid nor a continuous global forecast.
+
+### Scene project format v2
+SAVE PROJECT now preserves annotation geometry, camera keyframes, configurable per-waypoint transition seconds, imported building footprint polygons, building heights and estimated-height flags, and building layer visibility. OPEN PROJECT supports both version 1 and version 2 with validation before editing the existing scene. The file does not embed Google/OSM map images, Google API keys or live weather provider responses. Local JSON load limit is 8 MB, with geometry complexity limits enforced. PROJECT RESET also clears user-supplied building meshes.
+
+### Testing
+On WIN11-181 run npm run test:v3 for 24 assertions: wind vector controls, weather GeoJSON export, no extra API fetch on layer changes, project v2 save/restore, invalid-data rejection and v1 backward compatibility. Run the desktop, Cesium Earth, mobile, studio and capture regression tests too.
+
+NOT YET IMPLEMENTED: true worldwide 9 km atmospheric data cubes, scientifically resolved volumetric clouds, physically accurate waves, global wind particle advection, automatic licensed photorealistic building data, or original Facebook-author source assets.

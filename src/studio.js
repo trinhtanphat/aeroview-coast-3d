@@ -2,9 +2,9 @@
 // mutate Google Photorealistic 3D Tiles or any original terrain geometry.
 const $=id=>document.getElementById(id);
 const geom={pin:'Point',line:'LineString',polygon:'Polygon'};
-export function makeEditorStudio({C,viewer,mode='atlas'}){
+export function makeEditorStudio({C,viewer,mode='atlas',buildings=null}){
  let active=true,drawMode=null,points=[],entities=[],selected=null,editMode=false,handles=[],dragging=null;
- let keyframes=[],playing=false,recording=false,recorder=null,stream=null,ticker=null,recordTimeout=null;
+ let keyframes=[],playing=false,recording=false,recorder=null,stream=null,ticker=null,recordTimeout=null,routeDuration=4;
  const handler=new C.ScreenSpaceEventHandler(viewer.scene.canvas);
  const cam=viewer.scene.screenSpaceCameraController;
  const status=s=>{if(active)$('draw-status').textContent=s;};
@@ -199,8 +199,10 @@ export function makeEditorStudio({C,viewer,mode='atlas'}){
    &&['heading','pitch','roll'].every(k=>typeof f.orientation[k]==='number'&&Number.isFinite(f.orientation[k])&&Math.abs(f.orientation[k])<1000);
  function exportProject(){
   const payload={
-    schema:'aeroview-project',version:1,created_at:new Date().toISOString(),
+    schema:'aeroview-project',version:2,created_at:new Date().toISOString(),
     crs:'EPSG:4326',
+    camera:{secondsPerWaypoint:routeDuration},
+    buildingLayer:buildings?.exportSnapshot()||null,
     annotations:entities.map(({model})=>({
      type:model.type,coordinates:JSON.parse(JSON.stringify(model.coordinates))
     })),
@@ -210,19 +212,24 @@ export function makeEditorStudio({C,viewer,mode='atlas'}){
     }))
   };
   download(new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}),'aeroview-project.json');
-  projectStatus('Saved '+payload.annotations.length+' annotations and '+payload.keyframes.length+' keyframes. No API keys included.');
+  projectStatus('Saved '+payload.annotations.length+' annotations, '+payload.keyframes.length+' camera views and '+(payload.buildingLayer?.items.length||0)+' 3D building footprints. No keys, tiles or weather records.');
  }
  function clearProject(){
   if(drawMode)finish();
+  if(editMode)toggleEditing(false);
+  if(playing)stopRoute();
   hideHandles();selected=null;
   entities.forEach(item=>viewer.entities.remove(item.entity));
   entities=[];points=[];keyframes=[];
   $('keyframe-count').textContent='0 KEYFRAMES';
+  routeDuration=4;
+  $('camera-duration').value='4';
+  $('camera-duration-label').textContent='4.0 s';
   viewer.scene.requestRender();
  }
  function loadProject(raw){
   const obj=JSON.parse(raw);
-  if(obj?.schema!=='aeroview-project'||obj.version!==1
+  if(obj?.schema!=='aeroview-project'||![1,2].includes(obj.version)
    ||!Array.isArray(obj.annotations)||!Array.isArray(obj.keyframes)
    ||obj.annotations.length>300||obj.keyframes.length>100)throw new Error('Unsupported project schema or excessive entries.');
   let pointCount=0;
@@ -237,6 +244,10 @@ export function makeEditorStudio({C,viewer,mode='atlas'}){
    return {type:f.type,coordinates:JSON.parse(JSON.stringify(coords))};
   });
   if(!obj.keyframes.every(validFrame))throw new Error('Invalid camera keyframe.');
+  const seconds=obj.version===2?obj.camera?.secondsPerWaypoint:4;
+  if(typeof seconds!=='number'||!Number.isFinite(seconds)||seconds<2||seconds>12)throw new Error('Invalid camera timing.');
+  // Fully validate the building layer before overwriting annotations or keyframes.
+  const nextBuildings=obj.version===2?buildings?.validateSnapshot(obj.buildingLayer):undefined;
   // Validate everything BEFORE mutating the live scene.
   clearProject();
   for(const g of drawings)addDrawn(g.type,g.coordinates);
@@ -245,21 +256,26 @@ export function makeEditorStudio({C,viewer,mode='atlas'}){
    orientation:{heading:f.orientation.heading,pitch:f.orientation.pitch,roll:f.orientation.roll}
   }));
   $('keyframe-count').textContent=keyframes.length+' KEYFRAMES';
-  projectStatus('Loaded '+drawings.length+' annotations and '+keyframes.length+' camera keyframes.');
+  routeDuration=seconds;
+  $('camera-duration').value=String(routeDuration);
+  $('camera-duration-label').textContent=routeDuration.toFixed(1)+' s';
+  if(obj.version===2&&buildings)buildings.restoreSnapshot(nextBuildings);
+  projectStatus('Loaded '+drawings.length+' annotations, '+keyframes.length+' camera views, '+(nextBuildings?.items.length||0)+' 3D building footprints.');
   status('Project overlays restored · edit or export GeoJSON as needed.');
   viewer.scene.requestRender();
  }
  $('project-save').addEventListener('click',exportProject);
  $('project-clear').addEventListener('click',()=>{
   clearProject();
-  projectStatus('Project reset locally; no file was deleted from your computer.');
+  buildings?.clear();
+  projectStatus('Project reset, including local buildings. No files were deleted from your computer.');
  });
  $('project-load').addEventListener('click',()=>$('project-file').click());
  $('project-file').addEventListener('change',async e=>{
    const file=e.target.files?.[0];
    if(!file)return;
    try{
-    if(file.size>2*1024*1024)throw new Error('Project must be smaller than 2 MB.');
+    if(file.size>8*1024*1024)throw new Error('Project must be smaller than 8 MB.');
     loadProject(await file.text());
    }catch(err){projectStatus('Cannot open project: '+(err?.message||'invalid file'));}
    finally{e.target.value='';}
@@ -271,6 +287,16 @@ export function makeEditorStudio({C,viewer,mode='atlas'}){
   return {destination:C.Cartesian3.clone(c.positionWC),
    orientation:{heading:c.heading,pitch:c.pitch,roll:c.roll}};
  }
+ $('camera-duration').addEventListener('input',e=>{
+  routeDuration=Number(e.target.value);
+  $('camera-duration-label').textContent=routeDuration.toFixed(1)+' s';
+ });
+ $('camera-back').addEventListener('click',()=>{
+  if(playing){camerastatus('Stop flight before removing a waypoint.');return;}
+  if(keyframes.length)keyframes.pop();
+  $('keyframe-count').textContent=keyframes.length+' KEYFRAMES';
+  camerastatus('Camera route now contains '+keyframes.length+' waypoints.');
+ });
  $('camera-add').addEventListener('click',()=>{
   keyframes.push(cameraFrame());
   $('keyframe-count').textContent=keyframes.length+' KEYFRAMES';
@@ -295,7 +321,7 @@ export function makeEditorStudio({C,viewer,mode='atlas'}){
    if(!playing||!active)break;
    const finished=await new Promise(resolve=>{
     viewer.camera.flyTo({destination:frame.destination,orientation:frame.orientation,
-     duration:Math.max(2.5,Math.min(6,keyframes.length*1.3)),
+     duration:routeDuration,
      complete:()=>resolve(true),cancel:()=>resolve(false)});
    });
    if(!finished)break;
@@ -387,7 +413,7 @@ export function makeEditorStudio({C,viewer,mode='atlas'}){
   }catch(e){recording=false;camerastatus('Recorder cannot start: '+(e?.name||'unsupported browser'));}
  });
  return {
-  diagnostics:()=>({annotations:entities.length,drawMode,editMode,selected:!!selected,keyframes:keyframes.length,playing,recording}),
+  diagnostics:()=>({annotations:entities.length,drawMode,editMode,selected:!!selected,keyframes:keyframes.length,routeDuration,playing,recording}),
   destroy(){
    active=false;stopRoute();stopRecording();
    handler.destroy();hideHandles();cam.enableInputs=true;

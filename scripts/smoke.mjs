@@ -3,7 +3,7 @@ import { strict as assert } from 'node:assert';
 const index=readFileSync('index.html','utf8');
 const script=readFileSync('src/main.js','utf8');
 const css=readFileSync('src/style.css','utf8');
-for(const id of ['world','cinematic','explore','fullscreen','haze-slider','time-slider','lights-toggle','fps','altitude','loading','quality-button','grid-sample','grid-layer','grid-fit','grid-clear','project-save','project-load','project-file','buildings-import','buildings-file','buildings-toggle']) assert(index.includes('id="'+id+'"'), 'missing DOM node '+id);
+for(const id of ['world','cinematic','explore','fullscreen','haze-slider','time-slider','lights-toggle','fps','altitude','loading','quality-button','grid-sample','grid-layer','grid-fit','grid-clear','project-save','project-load','project-file','buildings-import','buildings-file','buildings-toggle','grid-vectors','grid-export','camera-duration','camera-back']) assert(index.includes('id="'+id+'"'), 'missing DOM node '+id);
 for(const feature of ['WebGLRenderer','InstancedMesh','OrbitControls','requestAnimationFrame','setAnimationLoop','scene.fog','onResize','mergeGeometries','qualityOrder','__AEROVIEW_DIAGNOSTICS__']) assert(script.includes(feature), 'missing feature '+feature);
 for(const mod of ['src/weather-grid.js','src/buildings.js','src/studio.js','src/weather.js']) assert(existsSync(mod),'missing module '+mod);
 assert(css.length>1000);

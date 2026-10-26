@@ -177,7 +177,7 @@ export function setupEarthMode({onActivate=()=>{},onDeactivate=()=>{}}={}){
    weather=makeWeatherStudio({C,viewer});
    weatherGrid=makeSpatialWeatherGrid({C,viewer});
    buildings=makeBuildingOverlay({C,viewer});
-   editor=makeEditorStudio({C,viewer,mode});
+   editor=makeEditorStudio({C,viewer,mode,buildings});
   }catch(err){
    // Do not print a URL or error that could contain the user's API key.
    console.warn('AEROVIEW Earth viewer could not start:',err?.name||'loading error');
