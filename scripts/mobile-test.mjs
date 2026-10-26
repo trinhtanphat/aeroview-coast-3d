@@ -20,9 +20,15 @@ for(const [width,height] of [[390,844],[768,1024]]){
  await page.locator('#quality-button').scrollIntoViewIfNeeded({timeout:10000});
  await page.locator('#quality-button').click({timeout:10000});
  const quality=await page.locator('#quality-button').innerText();
+ await page.locator('#earth-open').click();
+ const earthModalShown=await page.locator('#earth-dialog').isVisible();
+ const dialogWidth=await page.locator('.earth-modal').evaluate(el=>el.getBoundingClientRect().width);
+ await page.locator('input[name=earth-layer][value=photoreal]').check();
+ const keyFieldShown=await page.locator('#earth-key').isVisible();
+ await page.locator('#earth-dialog-close').click();
  await page.screenshot({path:'mobile-'+width+'.png'});
- console.log(JSON.stringify({width,height,...before,wheelScroll,touchScroll,programScroll,quality,errors}));
+ console.log(JSON.stringify({width,height,...before,wheelScroll,touchScroll,programScroll,quality,earthModalShown,dialogWidth,keyFieldShown,errors}));
  await page.close();
- if(errors.length||before.scrollWidth>width+2||touchScroll<100||!quality.includes('ECO'))process.exitCode=1;
+ if(errors.length||before.scrollWidth>width+2||touchScroll<100||!quality.includes('ECO')||!earthModalShown||!keyFieldShown||dialogWidth>width-20)process.exitCode=1;
 }
 await browser.close();

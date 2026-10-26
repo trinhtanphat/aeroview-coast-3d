@@ -10,19 +10,44 @@
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-  <script type="module" crossorigin src="/aeroview-coast-3d/assets/index-BOaB1jmu.js"></script>
-  <link rel="stylesheet" crossorigin href="/aeroview-coast-3d/assets/index-wpoChuIg.css">
+  <script type="module" crossorigin src="/aeroview-coast-3d/assets/index-CbLjgxKc.js"></script>
+  <link rel="stylesheet" crossorigin href="/aeroview-coast-3d/assets/index-C-QUPek4.css">
 </head>
 <body>
 <div id="app">
   <canvas id="world" aria-label="Interactive three-dimensional coastal city"></canvas>
   <div id="vignette"></div>
+  <div id="earth-view" aria-label="Interactive real-world Cesium globe" hidden></div>
+  <div id="earth-attribution" hidden>© OpenStreetMap contributors</div>
+  <div id="earth-hud" hidden>
+    <div class="earth-hud-top"><span class="earth-live">● &nbsp;LIVE EARTH</span><strong id="earth-status">ATLAS MODE · OPENSTREETMAP</strong><button type="button" id="earth-exit">✕ &nbsp; RETURN TO CITY</button></div>
+    <div class="earth-hud-bottom"><span>FLY TO</span><button type="button" data-city="goldcoast">GOLD COAST</button><button type="button" data-city="hcmc">HỒ CHÍ MINH</button><button type="button" data-city="singapore">SINGAPORE</button><button type="button" data-city="nyc">NEW YORK</button><button type="button" data-city="tokyo">TOKYO</button><span class="earth-note">DRAG TO ROTATE · SCROLL TO ZOOM</span></div>
+  </div>
+  <div id="earth-dialog" class="earth-dialog" hidden>
+    <div class="earth-backdrop" data-close-earth></div>
+    <section class="earth-modal" role="dialog" aria-modal="true" aria-labelledby="earth-title">
+      <div class="earth-modal-top"><span>NEW EXPERIENCE / 002</span><button type="button" id="earth-dialog-close" aria-label="Close dialog">✕</button></div>
+      <p class="earth-overline">EXPLORE THE REAL PLANET</p>
+      <h2 id="earth-title">Go beyond<br/><em>the simulation.</em></h2>
+      <p class="earth-explain">Choose a real-world map experience. Your procedural coastal city stays safe and can be restored instantly.</p>
+      <fieldset class="earth-modes" aria-label="Earth map type">
+        <label><input type="radio" name="earth-layer" value="atlas" checked/><span><strong>WORLD ATLAS</strong><small>OpenStreetMap imagery on a 3D globe · no key · 2D map detail</small></span></label>
+        <label><input type="radio" name="earth-layer" value="photoreal"/><span><strong>PHOTOREAL 3D TILES</strong><small>Google real-world photogrammetry · API key + billing required</small></span></label>
+      </fieldset>
+      <label class="earth-input-label" for="earth-city">STARTING LOCATION</label>
+      <select id="earth-city"><option value="goldcoast">Gold Coast, Australia</option><option value="hcmc">Ho Chi Minh City, Vietnam</option><option value="singapore">Singapore</option><option value="nyc">New York City, USA</option><option value="tokyo">Tokyo, Japan</option></select>
+      <div id="earth-key-section" hidden><label class="earth-input-label" for="earth-key">GOOGLE MAP TILES API KEY</label><input id="earth-key" type="password" autocomplete="off" spellcheck="false" placeholder="Paste a restricted Google API key"/><p class="earth-warning">3D Tiles uses a billable Google Maps API. Only continue with your own authorized, HTTP-referrer-restricted key. It is used for requests in this browser session, never saved or committed to GitHub.</p><label class="earth-consent"><input type="checkbox" id="earth-paid-confirm"/> I understand this mode makes billable API requests.</label></div>
+      <p id="earth-message" class="earth-message" role="status" aria-live="polite"></p>
+      <div class="earth-modal-actions"><button id="earth-cancel" type="button">CANCEL</button><button id="earth-launch" type="button">LAUNCH EARTH VIEW ↗</button></div>
+      <p class="earth-provider-note">OpenStreetMap © contributors · Google content © respective data providers · <a href="https://developers.google.com/maps/documentation/tile/usage-and-billing" target="_blank" rel="noopener noreferrer">Billing details</a></p>
+    </section>
+  </div>
   <div id="loading" role="status"><div class="load-mark">A<span>✦</span></div><div class="load-track"><div id="load-bar"></div></div><p>GENERATING YOUR CITY</p></div>
   <div class="interface">
     <header class="topbar">
       <a class="brand" href="#" aria-label="Aeroview home"><span class="brand-mark">✳</span><span>AERO<span class="brand-light">VIEW</span></span></a>
       <div class="header-center"><span class="live-dot"></span> LIVE 3D ENVIRONMENT <span class="header-divider"></span> <span class="edition">STUDY NO. 001</span></div>
-      <div class="top-right"><div class="coordinates">27°58′ S &nbsp; 153°25′ E<br/><strong>COASTAL DISTRICT / SIMULATED</strong></div><button class="icon-button" id="fullscreen" title="Toggle fullscreen" aria-label="Toggle fullscreen"><svg viewBox="0 0 24 24" fill="none"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button></div>
+      <div class="top-right"><button type="button" id="earth-open" class="earth-open">◎ &nbsp; REAL EARTH</button><div class="coordinates">27°58′ S &nbsp; 153°25′ E<br/><strong>COASTAL DISTRICT / SIMULATED</strong></div><button class="icon-button" id="fullscreen" title="Toggle fullscreen" aria-label="Toggle fullscreen"><svg viewBox="0 0 24 24" fill="none"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button></div>
     </header>
     <main class="main-layout">
       <section class="hero">

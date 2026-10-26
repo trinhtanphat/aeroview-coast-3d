@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import { setupEarthMode } from './earth.js';
 import './style.css';
 
 const $ = (id) => document.getElementById(id);
@@ -430,6 +431,10 @@ function animate(){
  altEl.innerHTML=`${Math.round(Math.max(camera.position.y,0))} <small>M</small>`;
 }
 renderer.setAnimationLoop(animate);
+setupEarthMode({
+ onActivate:()=>{flyover=false;controls.enabled=false;renderer.setAnimationLoop(null);},
+ onDeactivate:()=>{controls.enabled=true;renderer.setAnimationLoop(animate);}
+});
 window.__AEROVIEW_DIAGNOSTICS__=()=>({
  drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,
  pixelRatio:renderer.getPixelRatio(),quality:qualityMode,buildings:totalBuildings,
