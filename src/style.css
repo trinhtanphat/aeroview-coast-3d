@@ -267,3 +267,11 @@ body.free-city-focus #earth-view>.free-city-panel button.free-city-focus{
 @media(max-width:800px){
  body.free-city-focus #earth-view>.free-city-panel{left:10px;right:auto;bottom:44px}
 }
+
+/* V10: explicit short cinematic WebM capture of free vector city. */
+.free-city-record-row{display:flex;gap:6px;margin-top:9px}
+.free-city-record-row button{min-height:35px;border:1px solid #d7c18c;background:#1d465b;color:#f7ecd3;font:800 9px "Space Grotesk",sans-serif;letter-spacing:.25px;cursor:pointer;padding:6px 8px}
+#free-city-record{flex:1}
+#free-city-record-stop{background:#102d40;border-color:#879faf8c}
+.free-city-record-row button:disabled{opacity:.65;cursor:not-allowed}
+@media(max-width:440px){.free-city-record-row button{font-size:8px;min-height:32px}}

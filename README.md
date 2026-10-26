@@ -265,3 +265,14 @@ The imagery remains map-style OpenStreetMap vector extrusions, NOT actual photog
 Tests: npm run test:free-city validates actual 3D tiles, attributed PNG file, 3 atmospheres, top-down composition, focus mode and camera flight. npm run test:free-city-mobile checks the UI at 390 px. Existing Atlas, weather and project regressions should remain green.
 
 References: https://maplibre.org/maplibre-gl-js/docs/examples/sky-fog-terrain/ ; https://openfreemap.org/tos/ . OpenFreeMap access is provided as is; use the service responsibly, retain the map's attribution and consider self-hosting if business traffic grows.
+
+
+## V10 - attributed browser WebM recording
+
+FREE REAL-WORLD 3D CITY supports user-triggered RECORD FLIGHT (12 seconds) and STOP & SAVE. Recording starts only when map building geometry is visible, composites the MapLibre canvas with permanent source credits, and exports WebM locally using MediaRecorder. It does not upload video frames, API keys or map data to AEROVIEW servers. Unsupported browsers receive a clear message.
+
+Video attribution: OpenFreeMap © OpenMapTiles · Data from © OpenStreetMap contributors. This is map-based cartographic animation and NOT satellite imagery or photogrammetric reconstruction. See https://openfreemap.org/tos/ and https://openfreemap.org/ for the data service terms.
+
+Run npm run test:free-city-video for a 4-second recorded WebM, verified EBML header, user-consented capture, valid download and no paid Google/Cesium API calls. A GPU software Chrome session may produce lower frame rates than hardware-accelerated video recording.
+
+**Recorded V10 example:** [4-second Gold Coast camera flight WebM](https://trinhtanphat.github.io/aeroview-coast-3d/demo-flight-v10.webm) (browser-rendered vector 3D, with permanent source attribution). It is a short verification example and not a photorealistic map or full-quality production export.

@@ -84,7 +84,7 @@ export async function createFreeBuildingsView({container,city='goldcoast'}={}){
   map.setPaintProperty('building-3d','fill-extrusion-color',
    ['interpolate',['linear'],['coalesce',['get','render_height'],10],
     0,'#c7cbc4',35,'#d6ddd9',110,'#abc2c5',240,'#829fac']);
-  controls=createFreeCityControls({map,world:container,getCity:()=>currentCity,onStop:()=>stopFlight()});
+  controls=createFreeCityControls({map,world:container,getCity:()=>currentCity,onStop:()=>stopFlight(),onStartFlight:()=>startFlight()});
   controls.setMood('daylight');
   map.resize();
  }catch(err){map.remove();child.remove();throw err;}

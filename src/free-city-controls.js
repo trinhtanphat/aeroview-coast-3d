@@ -1,7 +1,8 @@
 import {applyCityMood,cityView} from './free-city-visuals.js';
+import {makeCityVideoRecorder} from './free-city-video.js';
 
 // Controls exist only during the free OSM MapLibre viewer session.
-export function createFreeCityControls({map,world,getCity,onStop}){
+export function createFreeCityControls({map,world,getCity,onStop,onStartFlight}){
  const panel=document.createElement('aside');
  panel.className='free-city-panel';
  panel.setAttribute('aria-label','Geographic 3D city visual controls');
@@ -17,6 +18,8 @@ export function createFreeCityControls({map,world,getCity,onStop}){
   '<option value="daylight">DAYLIGHT</option><option value="golden">GOLDEN HOUR</option>',
   '<option value="bluehour">BLUE HOUR</option></select>',
   '<button type="button" id="free-city-png" title="PNG includes source attribution">↓ PNG</button></div>',
+  '<div class="free-city-record-row"><button type="button" id="free-city-record" data-duration="12">● RECORD FLIGHT · 12 S WEBM</button>',
+  '<button type="button" id="free-city-record-stop">■ STOP & SAVE</button></div>',
   '<p class="free-city-status" role="status">Loading georeferenced building tiles…</p>',
   '<button type="button" class="free-city-focus" aria-pressed="false">◫ HIDE UI</button>'
  ].join('');
@@ -26,13 +29,21 @@ export function createFreeCityControls({map,world,getCity,onStop}){
  const status=panel.querySelector('.free-city-status');
  const focus=panel.querySelector('.free-city-focus');
  let active=true,mood='daylight',focused=false,count=0,tilesReady=false,captureCount=0;
+ const recButton=panel.querySelector('#free-city-record');
+ const recStop=panel.querySelector('#free-city-record-stop');
+ const recording=makeCityVideoRecorder({map,onStartFlight,onStopFlight:onStop,onStatus:s=>{if(active)status.textContent=s;}});
  function update(){
   if(!active)return;
   tilesReady=map.areTilesLoaded()&&map.isSourceLoaded('openmaptiles');
   try{count=map.queryRenderedFeatures({layers:['building-3d']}).length;}catch{count=0;}
-  status.textContent=tilesReady
-   ? count+' geolocated building features in view · OpenStreetMap / OpenFreeMap'
-   : 'Loading vector tiles… '+(count>0?count+' buildings drawn so far':'wait for buildings');
+  const videoState=recording.diagnostics();
+  if(!videoState.recording){
+   recButton.textContent='● RECORD FLIGHT · 12 S WEBM';recButton.disabled=false;
+   if(videoState.lastError){status.textContent=videoState.lastError;return;}
+   status.textContent=tilesReady
+    ? count+' geolocated building features in view · OpenStreetMap / OpenFreeMap'
+    : 'Loading vector tiles… '+(count>0?count+' buildings drawn so far':'wait for buildings');
+  }
  }
  const poll=setInterval(update,2200);
  map.on('idle',update);
@@ -50,6 +61,12 @@ export function createFreeCityControls({map,world,getCity,onStop}){
   },signal);
  }
  panel.querySelector('#free-city-mood').addEventListener('change',e=>setMood(e.target.value),signal);
+ recButton.addEventListener('click',()=>{
+  if(recording.start(Number(recButton.dataset.duration)||12)){
+   recButton.textContent='● RECORDING…';recButton.disabled=true;
+  }
+ },signal);
+ recStop.addEventListener('click',()=>recording.stop(),signal);
  focus.addEventListener('click',()=>{
   focused=!focused;
   document.body.classList.toggle('free-city-focus',focused);
@@ -85,10 +102,10 @@ export function createFreeCityControls({map,world,getCity,onStop}){
  },signal);
  return {
   update,setMood,
-  diagnostics:()=>({mood,focused,tilesReady,visibleBuildings:count,captures:captureCount}),
+  diagnostics:()=>({mood,focused,tilesReady,visibleBuildings:count,captures:captureCount,video:recording.diagnostics()}),
   destroy(){
    if(!active)return;
-   active=false;clearInterval(poll);
+   active=false;recording.destroy();clearInterval(poll);
    map.off('idle',update);
    ac.abort();
    document.body.classList.remove('free-city-focus');

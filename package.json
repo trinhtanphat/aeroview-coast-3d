@@ -13,6 +13,7 @@
     "test:osm-mock": "node scripts/osm-provider-mock-test.mjs",
     "test:free-city": "node scripts/free-city-test.mjs",
     "test:free-city-mobile": "node scripts/free-city-mobile-test.mjs",
+    "test:free-city-video": "node scripts/free-city-video-test.mjs",
     "test:mobile": "node scripts/mobile-test.mjs",
     "test:earth": "node scripts/earth-test.mjs",
     "test:studio": "node scripts/studio-test.mjs",
