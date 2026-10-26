@@ -1,6 +1,7 @@
 import {applyCityMood,cityView} from './free-city-visuals.js';
 import {makeCityVideoRecorder} from './free-city-video.js';
 import {setFacadeDetail} from './free-city-facades.js';
+import {setOceanDetail} from './free-city-water.js';
 
 // Controls exist only during the free OSM MapLibre viewer session.
 export function createFreeCityControls({map,world,getCity,onStop,onStartFlight,onCapture,onClear}){
@@ -11,6 +12,7 @@ export function createFreeCityControls({map,world,getCity,onStop,onStartFlight,o
   '<div class="free-city-head"><span>◈ &nbsp; AEROVIEW / REAL CITY</span><small>GEOGRAPHIC VECTOR MODEL</small></div>',
   '<p class="free-city-note">Real OSM building locations · approximate heights · not aerial photogrammetry</p>',
   '<label class="free-city-facade-toggle"><input type="checkbox" id="free-city-facades"/> <span>ILLUSTRATED WINDOW FACADES</span><small>Original decorative pattern · not real facade imagery</small></label>',
+  '<label class="free-city-facade-toggle"><input type="checkbox" id="free-city-ocean"/> <span>COASTAL WATER DETAIL</span><small>Decorative water shimmer · not real wave data</small></label>',
   '<div class="free-city-view" role="group" aria-label="Camera view">',
   '<button type="button" data-free-view="coast">COASTLINE</button>',
   '<button type="button" data-free-view="skyline" aria-pressed="true">SKYLINE</button>',
@@ -33,7 +35,7 @@ export function createFreeCityControls({map,world,getCity,onStop,onStartFlight,o
  const signal={signal:ac.signal};
  const status=panel.querySelector('.free-city-status');
  const focus=panel.querySelector('.free-city-focus');
- let active=true,mood='daylight',focused=false,count=0,tilesReady=false,captureCount=0,facadeDetail=false;
+ let active=true,mood='daylight',focused=false,count=0,tilesReady=false,captureCount=0,facadeDetail=false,oceanDetail=false;
  const recButton=panel.querySelector('#free-city-record');
  const recStop=panel.querySelector('#free-city-record-stop');
  const recording=makeCityVideoRecorder({map,onStartFlight,onStopFlight:onStop,onStatus:s=>{if(active)status.textContent=s;}});
@@ -42,6 +44,8 @@ export function createFreeCityControls({map,world,getCity,onStop,onStartFlight,o
  // Default to richer original cladding. Users can disable it to reduce visual complexity.
  try{facadeDetail=setFacadeDetail(map,true);panel.querySelector('#free-city-facades').checked=facadeDetail;}
  catch(e){facadeDetail=false;console.warn('Optional facade material fallback:',e?.name);}
+ try{oceanDetail=setOceanDetail(map,true);panel.querySelector('#free-city-ocean').checked=oceanDetail;}
+ catch(e){oceanDetail=false;console.warn('Optional ocean material fallback:',e?.name);}
  let capturedA=false,capturedB=false;
  const refreshCameraPoints=()=>{
   cameraStatus.textContent=capturedA&&capturedB?'CUSTOM A → B ROUTE READY · Choose RECORD or CINEMATIC FLIGHT':
@@ -83,6 +87,11 @@ export function createFreeCityControls({map,world,getCity,onStop,onStartFlight,o
  panel.querySelector('#free-city-facades').addEventListener('change',e=>{
   try{facadeDetail=setFacadeDetail(map,e.target.checked);}catch(err){
    facadeDetail=false;e.target.checked=false;status.textContent='Facade pattern unavailable: '+(err?.name||'Render error');
+  }
+ },signal);
+ panel.querySelector('#free-city-ocean').addEventListener('change',e=>{
+  try{oceanDetail=setOceanDetail(map,e.target.checked);}catch(err){
+   oceanDetail=false;e.target.checked=false;status.textContent='Water detail unavailable: '+(err?.name||'Render error');
   }
  },signal);
  for(const [key,id] of [['start','#free-camera-a'],['end','#free-camera-b']]){
@@ -141,7 +150,7 @@ export function createFreeCityControls({map,world,getCity,onStop,onStartFlight,o
  return {
   update,setMood,
   refreshCameraPoints:()=>{capturedA=false;capturedB=false;refreshCameraPoints();},
-  diagnostics:()=>({mood,focused,tilesReady,visibleBuildings:count,captures:captureCount,facadeDetail,
+  diagnostics:()=>({mood,focused,tilesReady,visibleBuildings:count,captures:captureCount,facadeDetail,oceanDetail,
    customCamera:{start:capturedA,end:capturedB},clipLength:Number(clipLength.value),video:recording.diagnostics()}),
   destroy(){
    if(!active)return;

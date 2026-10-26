@@ -1,8 +1,9 @@
 // Explicit, attributed WebM recording of an operator-controlled OSM vector map.
 // Captures ONLY the current MapLibre canvas + permanent visible source credits.
 // No Google/Cesium tiles, unlicensed imagery, location harvesting or server upload.
+import fixWebmDuration from 'fix-webm-duration';
 export function makeCityVideoRecorder({map,onStartFlight,onStopFlight,onStatus}){
- let recorder=null,stream=null,raf=0,timeout=null,frameCanvas=null,active=false,disposed=false,recorded=0,ended=0,lastError='';
+ let recorder=null,stream=null,raf=0,timeout=null,frameCanvas=null,active=false,disposed=false,recorded=0,ended=0,lastError='',startedAt=0;
  const credit='OpenFreeMap © OpenMapTiles · Data from © OpenStreetMap contributors';
  const mime=()=>['video/webm;codecs=vp8','video/webm;codecs=vp9','video/webm'].find(x=>window.MediaRecorder?.isTypeSupported?.(x))||'';
  const stopTracks=()=>{try{stream?.getTracks().forEach(t=>t.stop());}catch{}stream=null;};
@@ -73,21 +74,28 @@ export function makeCityVideoRecorder({map,onStartFlight,onStopFlight,onStatus})
    recorder=new MediaRecorder(stream,{mimeType:type,videoBitsPerSecond:3000000});
    recorder.addEventListener('dataavailable',e=>{if(e.data?.size)chunks.push(e.data);});
    recorder.addEventListener('error',()=>{active=false;cleanup();onStatus('MediaRecorder failed.');});
-   recorder.addEventListener('stop',()=>{
+   recorder.addEventListener('stop',async()=>{
     ended++;
-    const bytes=new Blob(chunks,{type:type});
+    const sourceBlob=new Blob(chunks,{type:type});
     chunks=[];
+    const recordedMs=Math.max(100,Math.round(performance.now()-startedAt));
     cleanup();
     if(disposed)return;
-    if(bytes.size<5000){onStatus('Video recording was too small; please retry with GPU rendering.');return;}
-    const url=URL.createObjectURL(bytes);
+    if(sourceBlob.size<5000){onStatus('Video recording was too small; please retry with GPU rendering.');return;}
+    // MediaRecorder frequently omits seekable duration metadata in WebM.
+    let output=sourceBlob;
+    try{output=await fixWebmDuration(sourceBlob,recordedMs,{logger:false});}
+    catch(err){console.warn('WebM duration metadata fallback:',err?.name||'metadata error');}
+    if(disposed)return;
+    const url=URL.createObjectURL(output);
     const a=document.createElement('a');
     a.href=url;a.download='aeroview-geographic-flight-attributed.webm';
     document.body.appendChild(a);a.click();a.remove();
     setTimeout(()=>URL.revokeObjectURL(url),20000);
     recorded++;
-    onStatus('Recorded attributed WebM flight ('+Math.round(bytes.size/1024)+' KB).');
+    onStatus('Recorded attributed WebM ('+Math.round(output.size/1024)+' KB; '+(recordedMs/1000).toFixed(1)+' s elapsed).');
    },{once:true});
+   startedAt=performance.now();
    recorder.start(500);
    active=true;
    const duration=Math.max(3,Math.min(20,Number(seconds)||12));

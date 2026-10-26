@@ -30,6 +30,10 @@ export function applyCityMood(map,mood='daylight'){
  paint('coastline','line-color',p.shore);
  paint('road-minor','line-color',p.minor);
  paint('road-main','line-color',p.major);
+ // Preserve geographic water boundaries while styling our optional decorative edge.
+ paint('aero-shore-glow','line-color',key==='golden'?'#ffe4c3':key==='bluehour'?'#b5c9df':'#b9f0e4');
+ paint('aero-shore-highlight','line-color',key==='golden'?'#fff5da':key==='bluehour'?'#c5d7eb':'#e9fff9');
+ paint('aero-water-detail','fill-opacity',key==='bluehour'?.28:key==='golden'?.42:.54);
  paint('building-3d','fill-extrusion-color',[
   'interpolate',['linear'],['coalesce',['get','render_height'],12],
   0,p.buildings[0],35,p.buildings[1],110,p.buildings[2],240,p.buildings[3]

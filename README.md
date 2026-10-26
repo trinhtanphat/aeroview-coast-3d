@@ -296,3 +296,19 @@ The switch in the map control panel can disable patterned facades to return to t
 **Verification:** Run `npm run test:facades` for baseline-versus-textured visual screenshots, mode switch, building count and browser errors. Use `npm run test:free-city-video` with SAVE_V12_PREVIEW=1 on a local developer machine to intentionally save a short `public/demo-flight-v12.webm` example. Run mobile, camera A/B, and Cesium Atlas regressions before release. Example current screenshot: `free-city-preview.png`. Example short video: `https://trinhtanphat.github.io/aeroview-coast-3d/demo-flight-v12.webm`.
 
 MapLibre fill-extrusion-pattern support: https://maplibre.org/maplibre-style-spec/layers/ ; OpenFreeMap usage: https://openfreemap.org/tos/ . All source provider attribution must remain visible in exported stills/clips.
+
+
+## V13 — subtler cartographic coastal water and mapped shoreline light
+
+AEROVIEW FREE REAL-WORLD 3D CITY now defaults to **COASTAL WATER DETAIL**: a low-contrast 128-pixel seamless procedural glint texture over OpenFreeMap water polygons, plus restrained water-edge glow and a fine shoreline highlight following the actual OSM-derived mapped water boundaries. Daylight, Golden Hour and Blue Hour palettes adapt the water light and shoreline tint. This is **stylized visual design, not measured tides, sea depth, physical wave simulation or satellite photography**. The existing weather/ECMWF Atlas remains a separate view.
+
+Use the COASTAL WATER DETAIL toggle to disable all these layers instantly for a plain vector-map sea, or if a GPU is too weak. The material tile is generated entirely in the browser; no new tile provider, account, billing token or new remote service is needed. It retains geographic water outlines and map data attribution in HTML and exported PNG/WebM. The initial repeating bright-patch prototype was deliberately rejected after image inspection and replaced with a much softer, interrupted highlight to avoid artificial patterns.
+
+Run `npm run test:water-view` (water on/off, city buildings, coastal camera, golden mood, close/cleanup and no paid calls); also run the existing facades/video/camera/mobile/Atlas regressions. When `SAVE_V13_PREVIEW=1`, the local WebM test saves a short credited `public/demo-flight-v13.webm` for deliberate publication. This clip is a test render, not a high-end photorealistic video. Example image: `free-city-preview.png`.
+
+
+### V13 WebM playback metadata correction
+
+MediaRecorder can create WebM blobs without seekable duration metadata. V13 now uses the MIT-licensed, zero-dependency `fix-webm-duration@1.0.6` package in the client only to repair the EBML duration field after recording, using measured recording wall time, without uploading video or re-encoding. If metadata repair fails, the original recorded WebM is still downloadable. On Chrome software-WebGL at WIN11-181, a 7-second demonstration recorded with source attribution was independently opened in Chromium and reported finite 7.015-second metadata at 1280×854. **Metadata repair does not create additional visual frames or fix a slow GPU**; smoothness still depends on actual rendering rate and hardware acceleration.
+
+Validation: `DEMO_VIDEO_PATH=public/demo-flight-v13.webm node scripts/check-v10-video.mjs` checks decoded video dimensions, finite reported duration and playback without browser decode errors. `npm run test:free-city-video` verifies recording lifecycle and the WebM header. This library does not interact with Google/Cesium keys and its JavaScript is bundled locally (no added external network request).

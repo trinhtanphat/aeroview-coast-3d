@@ -15,4 +15,4 @@ const v=await page.evaluate(async()=>{
 // Video frame validated from the actual decoded HTMLVideoElement.
 console.log(JSON.stringify(v,null,2));
 await browser.close();
-if(v.width<300||v.height<300||v.duration<2.5||v.error)process.exit(1);
+if(v.width<300||v.height<300||!Number.isFinite(v.duration)||v.duration<2.5||v.error)process.exit(1);
