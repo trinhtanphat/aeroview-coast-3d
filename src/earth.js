@@ -5,6 +5,7 @@ import {makeEditorStudio} from './studio.js';
 import {makeSpatialWeatherGrid} from './weather-grid.js';
 import {makeBuildingOverlay} from './buildings.js';
 import {makeForecastPlayback} from './forecast-playback.js';
+// Free OpenFreeMap/MapLibre renderer is imported on demand, avoiding initial JS weight.
 const CESIUM_VERSION = '1.145.0';
 const CESIUM_ROOT = `https://cdn.jsdelivr.net/npm/cesium@${CESIUM_VERSION}/Build/Cesium/`;
 const CITIES = Object.freeze({
@@ -80,7 +81,7 @@ function makeViewer(C, mode){
  return viewer;
 }
 export function setupEarthMode({onActivate=()=>{},onDeactivate=()=>{}}={}){
- let viewer=null, liveMode=null, busy=false, launching=0, priorIonToken=null, ionConfigured=false;
+ let viewer=null,freeCity=null, liveMode=null, busy=false, launching=0, priorIonToken=null, ionConfigured=false;
  let flightSerial=0,flightTimeout=null,activeCity='goldcoast';
  let weather=null,editor=null,weatherGrid=null,buildings=null,playback=null;
  const originalCoordinates=document.querySelector('.coordinates')?.innerHTML;
@@ -116,12 +117,15 @@ export function setupEarthMode({onActivate=()=>{},onDeactivate=()=>{}}={}){
   if(flightTimeout!==null)clearTimeout(flightTimeout);
   flightTimeout=null;
   if(viewer&&!viewer.isDestroyed())viewer.camera.cancelFlight();
+  freeCity?.stopFlight?.();
   $('earth-flight').textContent='▶ CINEMATIC FLIGHT';
  }
  function removeViewer(){
   stopFlight();
   try{playback?.destroy();buildings?.destroy();weatherGrid?.destroy();weather?.destroy();editor?.destroy();}catch(e){console.warn('Studio cleanup:',e.name);}
   playback=null;buildings=null;weatherGrid=null;weather=null;editor=null;$('studio').hidden=true;
+  try{freeCity?.destroy();}catch(e){console.warn('OpenFreeMap cleanup:',e?.name);}
+  freeCity=null;
   try{if(viewer&&!viewer.isDestroyed())viewer.destroy();}catch(e){console.warn('Cesium cleanup:',e.message);}
   viewer=null;liveMode=null;
   if(ionConfigured&&window.Cesium?.Ion){window.Cesium.Ion.defaultAccessToken=priorIonToken;ionConfigured=false;priorIonToken=null;}
@@ -160,6 +164,25 @@ export function setupEarthMode({onActivate=()=>{},onDeactivate=()=>{}}={}){
   modalButton.textContent='PREPARING THE GLOBE…';
   setMessage('Loading the Cesium 3D engine. The procedural city remains available.');
   try{
+   if(mode==='free3d'){
+    const {createFreeBuildingsView}=await import('./free-city.js');
+    if(current!==launching)return;
+    if(viewer||freeCity)removeViewer();
+    world.hidden=false;
+    freeCity=await createFreeBuildingsView({container:world,city});
+    if(current!==launching){freeCity.destroy();freeCity=null;return;}
+    liveMode=mode;activeCity=city;
+    document.body.classList.add('earth-mode');
+    hud.hidden=false;$('earth-attribution').hidden=true;
+    $('earth-status').textContent='FREE REAL-WORLD 3D CITY · OPENFREEMAP / OPENSTREETMAP';
+    $('earth-open').textContent='◎  EARTH MODE';
+    modal.hidden=true;resetKey();setMessage('');
+    onActivate(mode);
+    $('studio').hidden=true;
+    const label=document.querySelector('.coordinates');
+    if(label)label.textContent='OPENFREEMAP · REAL OSM BUILDINGS';
+    return;
+   }
    const C=await loadCesium();
    if(current!==launching)return;
    if(viewer){removeViewer();}
@@ -218,12 +241,19 @@ export function setupEarthMode({onActivate=()=>{},onDeactivate=()=>{}}={}){
    setMessage(mode==='photoreal'
     ?'Photoreal tiles could not load. Verify Google Map Tiles API, billing, key restrictions and regional coverage.'
     :mode==='osm3d'?'OSM 3D did not load. Verify Cesium ion token, asset permissions, quota and connectivity.'
+    :mode==='free3d'?'Free 3D City could not load. Verify OpenFreeMap vector tile/CDN access and WebGL support.'
     :'Unable to open the free atlas. Verify network/WebGL/CDN access and try again.',true);
   }finally{
    busy=false;modalButton.disabled=false;modalButton.textContent=oldLabel;
   }
  }
  function startFlight(){
+  if(freeCity){
+    freeCity.startFlight();
+    $('earth-flight').textContent='Ⅱ FLIGHT RUNNING';
+    $('earth-status').textContent='FREE 3D CITY · CAMERA FLIGHT OVER ACTUAL MAP COORDINATES';
+    return;
+  }
   if(!viewer||viewer.isDestroyed()||!window.Cesium)return;
   stopFlight();
   const C=window.Cesium,city=CITIES[activeCity]||CITIES.goldcoast;
@@ -264,13 +294,18 @@ export function setupEarthMode({onActivate=()=>{},onDeactivate=()=>{}}={}){
  $('earth-flight').addEventListener('click',startFlight);
  $('earth-flight-stop').addEventListener('click',()=>{
   stopFlight();
-  if(viewer&&!viewer.isDestroyed())$('earth-status').textContent='CAMERA PAUSED · DRAG TO EXPLORE';
+  if(freeCity||viewer&&!viewer.isDestroyed())$('earth-status').textContent='CAMERA PAUSED · DRAG TO EXPLORE';
  });
  $('studio-toggle').addEventListener('click',()=>{
   const collapsed=$('studio').classList.toggle('collapsed');
   $('studio-toggle').setAttribute('aria-expanded',String(!collapsed));
  });
  $('earth-open').addEventListener('click',open);
+ $('real-3d-open').addEventListener('click',()=>{
+  const input=document.querySelector('input[name="earth-layer"][value="free3d"]');
+  if(input)input.checked=true;
+  open();
+ });
  $('earth-launch').addEventListener('click',launch);
  $('earth-dialog-close').addEventListener('click',close);
  $('earth-cancel').addEventListener('click',close);
@@ -278,6 +313,7 @@ export function setupEarthMode({onActivate=()=>{},onDeactivate=()=>{}}={}){
  modal.querySelectorAll('input[name="earth-layer"]').forEach(el=>el.addEventListener('change',updateForm));
  $('earth-exit').addEventListener('click',()=>{deactivate();$('earth-open').textContent='◎  REAL EARTH';});
  hud.querySelectorAll('[data-city]').forEach(el=>el.addEventListener('click',()=>{
+  if(freeCity){stopFlight();activeCity=el.dataset.city;freeCity.setCity(activeCity);$('earth-status').textContent='FREE 3D CITY · '+activeCity.toUpperCase();return;}
   if(!viewer||!window.Cesium)return;
   const city=el.dataset.city;
   stopFlight();activeCity=city;
@@ -287,11 +323,12 @@ export function setupEarthMode({onActivate=()=>{},onDeactivate=()=>{}}={}){
  document.addEventListener('keydown',ev=>{
   if(ev.key==='Escape'){
    if(!modal.hidden){close();return;}
-   if(viewer){deactivate();$('earth-open').textContent='◎  REAL EARTH';}
+   if(viewer||freeCity){deactivate();$('earth-open').textContent='◎  REAL EARTH';}
   }
  });
  window.__AEROVIEW_EARTH_DIAGNOSTICS__=()=>({
-  active:!!viewer,mode:liveMode,
+  active:!!(viewer||freeCity),mode:liveMode,
+  freeMap:freeCity?.diagnostics(),
   globe:viewer?.scene?.globe?.show,
   imageryLayers:viewer?.imageryLayers?.length,
   tileCount:viewer?.scene?.globe?._surface?._tilesToRender?.length,

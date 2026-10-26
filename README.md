@@ -225,3 +225,26 @@ PNG/WebM export is intentionally disabled for both external 3D providers pending
 - All existing regression tests for GUI, GIS editing, weather, capture and mobile should remain operational.
 
 References: https://cesium.com/platform/cesium-ion/content/cesium-osm-buildings/ ; https://cesium.com/learn/ion/cesium-ion-access-tokens/ ; https://developers.google.com/maps/documentation/tile/policies
+
+
+## V8 — Free live real-world 3D city (no token)
+
+AEROVIEW now supports FREE REAL-WORLD 3D CITY using the open-source MapLibre GL JS renderer and the OpenFreeMap public OpenStreetMap-derived vector tiles. The building-3d layer is based on georeferenced footprints and render-height properties provided by the vector tile dataset. Unlike the procedural homepage scene, these footprints align with the actual city geography and coastline. They are **not** textured aerial photogrammetry, 3D scanned facades, Google imagery or full-resolution physics simulations.
+
+### Try the new view
+
+Select the REAL CITY 3D shortcut on the home screen, or use REAL EARTH → FREE REAL-WORLD 3D CITY → choose Gold Coast, Ho Chi Minh City, Singapore, New York or Tokyo → LAUNCH EARTH VIEW. No Cesium ion or Google API key is needed. Wait for the selected region's vector tiles to finish loading. Orbit/zoom with MapLibre controls, use the city shortcuts and CINEMATIC FLIGHT / STOP. Switch back to the procedural city using RETURN TO CITY. Weather and GIS overlays remain available in the separate Cesium World Atlas mode; they are not simulated inside this free MapLibre scene.
+
+The customized lightweight style includes water, coastline, roads, park/landcover and extruded 3D buildings. It avoids external font/sprite loading. MapLibre's dedicated Web Worker is configured explicitly for Vite and shipped as a separate static bundle, allowing real vector tiles to render in browsers (including the 181 software-WebGL test environment). OpenFreeMap map data and attribution remain visible at the bottom of the viewport.
+
+### Real-world caveats
+
+OpenStreetMap vector building data can have incomplete heights, incorrect geometry or incomplete coverage in some locations. Do not use it for legal surveying, engineering placement or absolute building height calculations. Styling is illustrative and may differ from the Facebook photorealistic reference. OpenFreeMap offers free hosted public vector tiles, but for a high-traffic commercial website consider capacity and provider terms, or self-host the vector tile server. See https://openfreemap.org/ and https://openfreemap.org/quick_start/.
+
+### Verification
+
+Use npm run test:free-city. The automated browser test validates actual loading and rendering of building features (at least 20 geolocated 3D building footprints) from OpenFreeMap, tile/source load completion, visible attribution, user-directed camera flight/stop, location changes, cleanup and no requests to Cesium ion or Google. During the Gold Coast test on WIN11-181, 254 features were rendered in the viewport. The displayed screenshot is a test capture, not a photographic aerial image: free-city-preview.png.
+
+![Gold Coast OSM footprint buildings viewed in real-time through MapLibre and OpenFreeMap](free-city-preview.png)
+
+Other modes remain: free OSM Atlas with weather and GIS editor, Cesium OSM 3D by explicitly authorized ion token, and Google Photorealistic 3D by explicitly authorized billable Google key. No secrets were added to Git or browser persistent storage.

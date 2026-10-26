@@ -11,6 +11,7 @@
     "test:visual": "node scripts/visual-v6-test.mjs",
     "test:osm-provider": "node scripts/osm-provider-test.mjs",
     "test:osm-mock": "node scripts/osm-provider-mock-test.mjs",
+    "test:free-city": "node scripts/free-city-test.mjs",
     "test:mobile": "node scripts/mobile-test.mjs",
     "test:earth": "node scripts/earth-test.mjs",
     "test:studio": "node scripts/studio-test.mjs",
@@ -25,6 +26,7 @@
     "test": "node scripts/smoke.mjs"
   },
   "dependencies": {
+    "maplibre-gl": "6.15.0",
     "three": "^0.180.0"
   },
   "devDependencies": {

@@ -10,8 +10,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-  <script type="module" crossorigin src="/aeroview-coast-3d/assets/index-Bt5A6k5f.js"></script>
-  <link rel="stylesheet" crossorigin href="/aeroview-coast-3d/assets/index-CdlXC5Tr.css">
+  <script type="module" crossorigin src="/aeroview-coast-3d/assets/index-C1if-5B1.js"></script>
+  <link rel="stylesheet" crossorigin href="/aeroview-coast-3d/assets/index-xtBciDn8.css">
 </head>
 <body class="focus-view">
 <div id="app">
@@ -82,9 +82,10 @@
       <div class="earth-modal-top"><span>NEW EXPERIENCE / 002</span><button type="button" id="earth-dialog-close" aria-label="Close dialog">✕</button></div>
       <p class="earth-overline">EXPLORE THE REAL PLANET</p>
       <h2 id="earth-title">Go beyond<br/><em>the simulation.</em></h2>
-      <p class="earth-explain">For location-accurate buildings choose Cesium OSM 3D; for textured photogrammetry choose Google 3D. Both require your own credentials. The free atlas contains 2D map tiles.</p>
+      <p class="earth-explain">FREE REAL-WORLD 3D CITY displays geolocated OpenStreetMap buildings with no account or API key. Cesium OSM 3D needs an ion token; Google photogrammetry needs a billable key. These are separate providers.</p>
       <fieldset class="earth-modes" aria-label="Earth map type">
         <label><input type="radio" name="earth-layer" value="atlas" checked/><span><strong>WORLD ATLAS</strong><small>OpenStreetMap imagery on a 3D globe · no key · 2D map detail</small></span></label>
+        <label><input type="radio" name="earth-layer" value="free3d"/><span><strong>FREE REAL-WORLD 3D CITY (OPENFREEMAP)</strong><small>Geolocated OSM building extrusions · MapLibre · no account or API key · free public vector tiles</small></span></label>
         <label><input type="radio" name="earth-layer" value="osm3d"/><span><strong>REAL 3D BUILDINGS (CESIUM OSM)</strong><small>Actual OSM building footprints and approximate heights · Cesium ion read token required · usage quota applies</small></span></label>
         <label><input type="radio" name="earth-layer" value="photoreal"/><span><strong>PHOTOREAL 3D TILES</strong><small>Google real-world photogrammetry · API key + billing required</small></span></label>
       </fieldset>
@@ -109,7 +110,7 @@
         <div class="eyebrow"><span class="eyebrow-line"></span> THE ART OF PERSPECTIVE <span class="hero-index">/ 001</span></div>
         <h1>Coastal<br/><i>perspective.</i></h1>
         <p class="subline">An original realtime coastal city study. Inspired by Gold Coast, not a map-accurate reconstruction.</p>
-        <div class="hero-actions"><button id="cinematic" class="primary-btn"><span class="play-shape">▶</span><span id="cinematic-label">START FLYOVER</span><span class="btn-arrow">↗</span></button><button id="explore" class="secondary-btn"><span class="tiny-target">◎</span> FREE EXPLORE</button></div>
+        <div class="hero-actions"><button id="cinematic" class="primary-btn"><span class="play-shape">▶</span><span id="cinematic-label">START FLYOVER</span><span class="btn-arrow">↗</span></button><button id="explore" class="secondary-btn"><span class="tiny-target">◎</span> FREE EXPLORE</button><button type="button" id="real-3d-open" class="real-3d-btn">▣ REAL CITY 3D</button></div>
       </section>
       <aside class="control-panel" id="panel">
         <div class="panel-top"><span class="micro">SCENE CONTROL</span><span class="panel-number">01 — 04</span></div>
